@@ -1,0 +1,116 @@
+---
+title: "Unit 2: Ordnung im Chaos"
+---
+
+**Dauer:** 20 Minuten | **Level:** Mittel
+
+In der Psychologie messen wir oft Konstrukte, die wir nicht sehen können (Latente Variablen), wie "Intelligenz" oder "Extraversion Dafür nutzen wir Fragebögen mit vielen Items. Aber messen diese 20 Items wirklich 20 verschiedene Dinge? Oder sind sie nur Variationen von wenigen zugrundeliegenden Dimensionen?
+
+### Die Explorative Faktorenanalyse (EFA)
+
+Die EFA ist eine Methode der **Dimensionsreduktion**. Sie sucht nach Bündeln von Variablen, die hoch miteinander korrelieren.
+
+* **Faktorladung:** Wie stark hängt ein Item mit dem latenten Faktor zusammen?
+* **Eigenwert:** Wie viel Information (Varianz) erklärt ein Faktor insgesamt?
+
+Die wichtigste Entscheidung ist oft: **Wie viele Faktoren stecken in meinen Daten?** 
+
+### Interaktives Labor: Der Screeplot-Entscheider
+
+Ein klassisches Werkzeug zur Entscheidungsfindung ist der **Screeplot**. Er zeigt die Eigenwerte der Faktoren. Wir suchen nach dem "Ellbogen" (Knick) – der Punkt, an dem weitere Faktoren nur noch "Geröll" (Rauschen) erklären.
+
+**Ihre Aufgabe:**
+1.  Stellen Sie ein, dass in den Daten **3 wahre Dimensionen** versteckt sind.
+2.  Erhöhen Sie die Anzahl der Items auf 20.
+3.  Schauen Sie auf den Screeplot. Wo ist der Knick? (Er sollte bei Faktor 3 sein).
+4.  **Härtetest:** Erhöhen Sie das "Rauschen" (Noise). Die Daten werden "dreckiger". Wird der Knick schwerer zu erkennen?
+5.  Achten Sie auf die **rote Linie**. Das ist eine Simulation von reinem Zufall (Parallelanalyse). Alles unter dieser Linie ist statistisch meist wertlos.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 600
+
+from shiny import App, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.h4("Daten-Generator"),
+            ui.input_slider("n_factors", "Anzahl echter Faktoren (Wahrheit)", 1, 5, 3),
+            ui.input_slider("noise", "Daten-Rauschen (Noise)", 0.2, 3.0, 0.8, step=0.2),
+            ui.input_slider("n_items", "Anzahl der Fragebogen-Items", 10, 30, 15),
+            ui.hr(),
+            ui.p("Simuliert eine Hauptkomponentenanalyse (PCA) auf synthetischen Daten.")
+        ),
+        ui.card(
+            ui.output_plot("scree_plot"),
+            ui.p("Blaue Linie = Ihre Daten", style="color:blue"),
+            ui.p("Rote Linie = Zufallsgrenze (Parallelanalyse)", style="color:red"),
+        ),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def scree_plot():
+        np.random.seed(99) # Konsistente Ergebnisse
+        n_samples = 200
+        n_items = input.n_items()
+        n_factors = input.n_factors()
+        noise_level = input.noise()
+
+        # 1. Latente Faktoren generieren (Die "Wahrheit" in den Köpfen der Probanden)
+        factors = np.random.normal(0, 1, (n_samples, n_factors))
+        
+        # 2. Ladungsmatrix (Welches Item gehört zu welchem Faktor?)
+        # Wir erzeugen eine einfache Struktur, wo Items primär auf einen Faktor laden
+        loadings = np.zeros((n_factors, n_items))
+        items_per_factor = n_items // n_factors
+        
+        for i in range(n_factors):
+            start = i * items_per_factor
+            end = (i + 1) * items_per_factor if i < n_factors - 1 else n_items
+            # Hohe Ladung auf dem Zielfaktor
+            loadings[i, start:end] = np.random.uniform(0.6, 0.95, end-start)
+            # Kleines Cross-Loading Rauschen auf allen Items
+            loadings[i, :] += np.random.normal(0, 0.1, n_items)
+
+        # 3. Daten simulieren: X = Faktoren * Ladungen + Rauschen
+        X = np.dot(factors, loadings) + np.random.normal(0, noise_level, (n_samples, n_items))
+
+        # 4. PCA durchführen
+        pca = PCA()
+        pca.fit(X)
+        eigenvalues = pca.explained_variance_
+        
+        # 5. Parallelanalyse simulieren (Vergleich mit Zufallsdaten gleicher Größe)
+        random_data = np.random.normal(0, 1, (n_samples, n_items))
+        pca_rand = PCA()
+        pca_rand.fit(random_data)
+        rand_eigenvalues = pca_rand.explained_variance_
+
+        # Plotten
+        fig, ax = plt.subplots(figsize=(8, 5))
+        components = range(1, len(eigenvalues) + 1)
+        
+        # Screeplot
+        ax.plot(components, eigenvalues, 'o-', color='#337ab7', linewidth=2, label='Empirische Eigenwerte')
+        ax.plot(components, rand_eigenvalues, '--', color='#d9534f', alpha=0.7, label='Zufallsrauschen (Parallelanalyse)')
+        
+        # Markierung der Wahrheit
+        ax.axvline(x=n_factors, color='green', linestyle=':', linewidth=2, alpha=0.6, label='Wahre Anzahl Faktoren')
+
+        ax.set_xlabel('Komponente / Faktor Nummer')
+        ax.set_ylabel('Eigenwert (Erklärte Varianz)')
+        ax.set_title('Screeplot Analyse')
+        ax.set_xticks(components)
+        ax.legend()
+        ax.grid(True, linestyle=':', alpha=0.6)
+
+        return fig
+
+app = App(app_ui, server)
+```

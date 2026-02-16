@@ -1,0 +1,123 @@
+---
+title: "Unit 3: Der Blick in die Black Box"
+---
+
+**Dauer:** 20 Minuten | **Level:** Schwer
+
+Wissenschaftliche Psychologie gibt sich selten damit zufrieden festzustellen, *dass* A mit B zusammenhängt. Wir wollen wissen *warum*. Hier betreten wir das Feld der **Kausalmodelle** und **Mediationsanalysen**.
+
+### Die Anatomie eines Wirkmechanismus
+
+Nehmen wir ein klassisches Beispiel: Macht Smartphone-Nutzung (X) unglücklich (Y)?
+Vielleicht nicht direkt. Vielleicht führt Nutzung zu "Gefühlter Zeitverschwendung" (M), und *das* macht unglücklich.
+
+Wir zerlegen den Effekt in Pfade:
+* **Pfad a:** Wirkung von X auf den Mediator ($X \rightarrow M$)
+* **Pfad b:** Wirkung des Mediators auf Y ($M \rightarrow Y$)
+* **Pfad c':** Der verbleibende direkte Effekt ($X \rightarrow Y$)
+
+Der **Indirekte Effekt** (die Mediation) ist das Produkt aus a und b ($a \times b$).
+
+### Interaktives Labor: Der Pfad-Simulator
+
+Experimentieren Sie mit den Pfadkoeffizienten, um zu verstehen, wie sich der Gesamteffekt auf die Psyche zusammensetzt.
+
+**Ihre Aufgabe:**
+1.  Stellen Sie **Pfad a** (Nutzung -> Zeitverschwendung) auf 0.5.
+2.  Stellen Sie **Pfad b** (Zeitverschwendung -> Unglück) auf 0.5.
+3.  Setzen Sie den **direkten Pfad c'** auf 0.
+4.  Beobachten Sie das Ergebnis rechts: Obwohl es keinen direkten Pfad gibt, existiert ein starker **Gesamteffekt**. Das ist eine "Vollständige Mediation". Der Wirkmechanismus erklärt alles.
+5.  Was passiert, wenn **Pfad b** negativ ist? (z.B. wenn der Mediator etwas Positives wäre).
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 500
+
+from shiny import App, render, ui
+import matplotlib.pyplot as plt
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.h4("Pfad-Kontrolle"),
+            ui.input_slider("path_a", "Pfad a (X -> M)", -1.0, 1.0, 0.6, step=0.1),
+            ui.input_slider("path_b", "Pfad b (M -> Y)", -1.0, 1.0, 0.6, step=0.1),
+            ui.input_slider("path_c_prime", "Pfad c' (Direkter Rest-Effekt)", -1.0, 1.0, 0.1, step=0.1),
+            ui.hr(),
+            ui.p("X = Smartphone Nutzung"),
+            ui.p("M = Zeitverschwendung"),
+            ui.p("Y = Unwohlsein")
+        ),
+        ui.card(
+            ui.output_plot("path_model"),
+        ),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def path_model():
+        a = input.path_a()
+        b = input.path_b()
+        c_prime = input.path_c_prime()
+        
+        # Berechnungen
+        indirect_effect = a * b
+        total_effect = c_prime + indirect_effect
+        
+        fig, (ax_model, ax_bar) = plt.subplots(1, 2, figsize=(10, 5), gridspec_kw={'width_ratios': [2, 1]})
+        
+        # --- 1. Pfadmodell Zeichnung (Links) ---
+        ax_model.set_xlim(0, 10)
+        ax_model.set_ylim(0, 6)
+        ax_model.axis('off')
+        
+        # Boxen Style
+        bbox_props = dict(boxstyle="round,pad=0.5", fc="white", ec="black", lw=2)
+        
+        # Knoten
+        ax_model.text(1.5, 1.5, "Ursache\n(X)", ha="center", va="center", size=12, bbox=bbox_props)
+        ax_model.text(5, 4.5, "Mediator\n(M)", ha="center", va="center", size=12, bbox=bbox_props)
+        ax_model.text(8.5, 1.5, "Wirkung\n(Y)", ha="center", va="center", size=12, bbox=bbox_props)
+        
+        # Pfeile Funktion
+        def draw_arrow(x1, y1, x2, y2, label, val):
+            ax_model.annotate("", xy=(x2, y2), xytext=(x1, y1),
+                            arrowprops=dict(arrowstyle="->", lw=2, color="#333"))
+            mid_x = (x1 + x2) / 2
+            mid_y = (y1 + y2) / 2
+            # Label Hintergrund
+            ax_model.text(mid_x, mid_y, f"{label} = {val:.2f}", 
+                        ha="center", va="center", color="blue", fontweight="bold", 
+                        bbox=dict(boxstyle="round,pad=0.2", fc="#f0f0f0", ec="none", alpha=0.8))
+
+        # Koordinaten anpassen für Pfeilspitzen
+        draw_arrow(2.2, 2.0, 4.3, 4.0, "a", a) # X -> M
+        draw_arrow(5.7, 4.0, 7.8, 2.0, "b", b) # M -> Y
+        draw_arrow(2.5, 1.5, 7.5, 1.5, "c'", c_prime) # X -> Y
+
+        ax_model.set_title("Kausales Strukturmodell", fontsize=14)
+
+        # --- 2. Ergebnis Balkendiagramm (Rechts) ---
+        labels = ['Indirekt\n(a*b)', 'Direkt\n(c\')', 'Gesamt\n(Total)']
+        values = [indirect_effect, c_prime, total_effect]
+        colors = ['#f0ad4e', '#5bc0de', '#5cb85c'] # Orange, Blue, Green
+        
+        bars = ax_bar.bar(labels, values, color=colors, edgecolor='black')
+        ax_bar.axhline(0, color='black', linewidth=1)
+        ax_bar.set_ylim(-1.5, 1.5)
+        ax_bar.set_title("Effekt-Zerlegung", fontsize=14)
+        ax_bar.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Werte an den Balken
+        for bar in bars:
+            height = bar.get_height()
+            label_pos = height + 0.1 if height > 0 else height - 0.15
+            ax_bar.text(bar.get_x() + bar.get_width()/2., label_pos,
+                        f'{height:.2f}', ha='center', va='center', fontweight='bold')
+
+        plt.tight_layout()
+        return fig
+
+app = App(app_ui, server)
+```

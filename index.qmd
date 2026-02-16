@@ -1,0 +1,23 @@
+---
+title: "Willkommen"
+---
+
+Die menschliche Psyche ist komplex. Wer versucht, menschliches Verhalten mit einfachen Wenn-Dann-Regeln (Bivariate Korrelationen) zu erklären, scheitert oft an der Realität.
+
+Dieser Workshop **"Beyond Simple Correlations"** ist eine methodische Reise von einfachen Zusammenhängen hin zu realistischen Modellen.
+
+### Ihr Lernpfad
+Sie können diese Module unabhängig voneinander bearbeiten, je nachdem, vor welchem methodischen Problem Sie stehen:
+
+1.  **Unit 1: Der Kampf um Varianz (Multiple Regression)** 
+    * *Problem:* Zwei Ursachen hängen zusammen. Wer beeinflusst das Ergebnis wirklich?
+    * *Ziel:* Den "spezifischen Einfluss" isolieren.
+2.  **Unit 2: Ordnung im Chaos (Faktorenanalyse)** 
+    * *Problem:* Sie haben 20 Fragen im Fragebogen, aber messen die eigentlich nur 3 Dinge?
+    * *Ziel:* Latente Strukturen (Konstrukte) entdecken.
+3.  **Unit 3: Der Blick in die Black Box (Mediationsanalyse)** 
+    * *Problem:* Wir wissen, *dass* X auf Y wirkt. Aber *warum*?
+    * *Ziel:* Wirkmechanismen und Kausalketten aufdecken.
+
+### Technische Hinweise
+Dieser Workshop ist **interaktiv**. Sie werden in jedem Kapitel Code-Zellen finden, die direkt in Ihrem Browser laufen. Nutzen Sie diese Simulationen, um ein intuitives Gefühl für die Zahlen zu bekommen.

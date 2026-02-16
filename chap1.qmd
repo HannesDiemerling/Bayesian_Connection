@@ -1,0 +1,114 @@
+---
+title: "Unit 1: Der Kampf um Varianz"
+---
+
+**Dauer:** 15 Minuten | **Level:** Leicht
+
+In der psychologischen Forschung haben wir selten den Luxus, dass eine Variable (z.B. Musikalität) nur von einer einzigen anderen Variable (z.B. Alter) abhängt. Meistens spielen viele Faktoren eine Rolle – und das Schlimmste: Diese Faktoren hängen auch noch untereinander zusammen.
+
+### Das Problem: Wer war's wirklich?
+
+Stellen Sie sich vor, wir finden heraus:
+1.  Ältere Kinder sind musikalischer.
+2.  Kinder, denen Musik wichtig ist, sind musikalischer.
+3.  Aber: Ältere Kinder finden Musik oft *weniger* wichtig.
+
+Wenn wir nur das Alter betrachten, übersehen wir das komplexe Zusammenspiel. Die **Multiple Regression** löst das, indem sie den **spezifischen Einfluss** einer Variable berechnet, während sie alle anderen Variablen im Modell "konstant hält" (herausrechnet).
+
+Man kann sich das wie ein Venn-Diagramm vorstellen: Wir interessieren uns nur für die Fläche, die *exklusiv* von einem Prädiktor abgedeckt wird, nicht für die Überlappungen.
+
+### Interaktives Labor: Der "Omitted Variable Bias"
+
+In dieser Simulation sehen Sie den Unterschied zwischen einer "naiven" Analyse (wir schauen uns nur eine Variable an) und einer "korrekten" multiplen Analyse.
+
+**Ihre Aufgabe:**
+1.  Setzen Sie den **wahren Effekt von X2** (dem Störfaktor) auf einen hohen Wert (z.B. -0.8).
+2.  Erhöhen Sie die **Korrelation** zwischen X1 und X2.
+3.  Beobachten Sie den roten Balken ("Naiver Effekt"). Sehen Sie, wie er sich vom grauen Balken ("Wahrer Effekt") entfernt? Das ist die Verzerrung, wenn man Komplexität ignoriert.
+4.  Der grüne Balken ("Multipler Effekt") bleibt nah an der Wahrheit. Warum? Weil er X2 kontrolliert.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 600
+
+from shiny import App, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.h4("Parameter Labor"),
+            ui.input_slider("r_x1_x2", "Korrelation zwischen X1 und X2", -0.9, 0.9, 0.6, step=0.1),
+            ui.hr(),
+            ui.input_slider("b1", "Wahrer Effekt X1 -> Y", -1.0, 1.0, 0.5, step=0.1),
+            ui.input_slider("b2", "Wahrer Effekt X2 -> Y (Störvariable)", -1.0, 1.0, -0.8, step=0.1),
+            ui.input_slider("n", "Stichprobengröße N", 50, 500, 200),
+        ),
+        ui.card(
+            ui.output_plot("reg_plot"),
+            ui.p("Grau = Wahrheit (Gott-Modus)", style="color:gray; font-size:0.9em"),
+            ui.p("Rot = Naive Messung (Verzerrt!)", style="color:red; font-size:0.9em"),
+            ui.p("Grün = Multiple Regression (Korrigiert)", style="color:green; font-size:0.9em"),
+        ),
+    ),
+)
+
+def server(input, output, session):
+    @render.plot
+    def reg_plot():
+        np.random.seed(42)
+        n = input.n()
+        r12 = input.r_x1_x2()
+        b1_true = input.b1()
+        b2_true = input.b2()
+
+        # Daten generieren: Korrelierte Prädiktoren X1 und X2
+        mean = [0, 0]
+        cov = [[1, r12], [r12, 1]]
+        X = np.random.multivariate_normal(mean, cov, n)
+        x1 = X[:, 0]
+        x2 = X[:, 1]
+
+        # Y generieren (Wahre Welt)
+        y = b1_true * x1 + b2_true * x2 + np.random.normal(0, 1, n)
+
+        # 1. Naive Analyse: Wir ignorieren X2 und schauen nur auf X1
+        model_simple = LinearRegression()
+        model_simple.fit(x1.reshape(-1, 1), y)
+        b1_naive = model_simple.coef_[0]
+
+        # 2. Multiple Regression: Wir nehmen X1 und X2 ins Modell auf
+        model_multi = LinearRegression()
+        model_multi.fit(X, y)
+        b1_multi = model_multi.coef_[0]
+
+        # Plotting
+        fig, ax = plt.subplots(figsize=(6, 5))
+        
+        labels = ['Wahrheit\n(X1)', 'Naive Analyse\n(nur X1 gemessen)', 'Multiple Reg.\n(X1 kontrolliert)']
+        values = [b1_true, b1_naive, b1_multi]
+        colors = ['#cccccc', '#d9534f', '#5cb85c'] # Gray, Bootstrap Red, Bootstrap Green
+        
+        bars = ax.bar(labels, values, color=colors, alpha=0.8, edgecolor='black')
+        ax.axhline(0, color='black', linewidth=1)
+        ax.set_ylabel("Geschätzter Effekt (Slope b)", fontsize=12)
+        ax.set_title(f"Verzerrung durch Korrelation (r={r12})", fontsize=14, fontweight='bold')
+        ax.set_ylim(-1.5, 1.5)
+        
+        # Labels auf den Balken
+        for bar in bars:
+            height = bar.get_height()
+            label_y_pos = height + 0.1 if height > 0 else height - 0.15
+            ax.text(bar.get_x() + bar.get_width()/2., label_y_pos,
+                    f'{height:.2f}',
+                    ha='center', va='center', fontweight='bold', fontsize=11)
+
+        # Gitterlinien für bessere Lesbarkeit
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
+
+        return fig
+
+app = App(app_ui, server)
+```
