@@ -1,113 +1,82 @@
 ---
-title: "Unit 1: Der Kampf um Varianz"
+title: "3.1 Von der Stichprobe zur Population"
+format: html
 ---
 
-**Dauer:** 15 Minuten | **Level:** Leicht
+## Zeit: 15 min | Schwierigkeit: Einsteiger
 
-In der psychologischen Forschung haben wir selten den Luxus, dass eine Variable (z.B. Musikalität) nur von einer einzigen anderen Variable (z.B. Alter) abhängt. Meistens spielen viele Faktoren eine Rolle – und das Schlimmste: Diese Faktoren hängen auch noch untereinander zusammen.
+### Theorie: Die Suche nach der absoluten Wahrheit
+In der empirischen Forschung messen wir fast nie die gesamte Population. Wir ziehen eine Stichprobe. Das Ziel ist es, von dieser kleinen, messbaren Gruppe auf die absolute Wahrheit in der Grundgesamtheit zu schließen. 
 
-### Das Problem: Wer war's wirklich?
+Zwei Faktoren bestimmen maßgeblich, ob diese Schätzung gelingt: Die Repräsentativität und die Stichprobengröße. Eine systematisch verzerrte Stichprobe liefert immer falsche Ergebnisse, egal wie groß sie ist. Doch selbst bei absolut perfekter Repräsentativität schwankt das gemessene Ergebnis durch reinen Zufall. Erst mit zunehmender Stichprobengröße schrumpft dieser unvermeidbare Zufallsfehler. Die Schätzung konvergiert gegen die wahre Populationswahrheit (Moore et al., 2012, Introduction to the Practice of Statistics).
 
-Stellen Sie sich vor, wir finden heraus:
-1.  Ältere Kinder sind musikalischer.
-2.  Kinder, denen Musik wichtig ist, sind musikalischer.
-3.  Aber: Ältere Kinder finden Musik oft *weniger* wichtig.
+### Beispiel Wahlergebnis: Die trügerische Umfrage
+Du willst das bundesweite Wahlergebnis einer bestimmten Partei vorhersagen. Der wahre, dir noch unbekannte Anteil in der Bevölkerung liegt bei exakt 42 Prozent. 
 
-Wenn wir nur das Alter betrachten, übersehen wir das komplexe Zusammenspiel. Die **Multiple Regression** löst das, indem sie den **spezifischen Einfluss** einer Variable berechnet, während sie alle anderen Variablen im Modell "konstant hält" (herausrechnet).
+Befragst du für deine Umfrage nur 100 zufällige Personen, wird das Ergebnis massiv schwanken. In einer Umfrage misst du vielleicht 35 Prozent, in einer direkt darauffolgenden Umfrage plötzlich 49 Prozent. Die Schätzung springt wild umher und ist für verlässliche Prognosen völlig unbrauchbar. Befragst du hingegen 1000 oder 5000 Personen, greift das Gesetz der großen Zahlen. Deine Ergebnisse pendeln sich extrem eng um die echten 42 Prozent ein. Die Illusion der wilden Schwankung verschwindet.
 
-Man kann sich das wie ein Venn-Diagramm vorstellen: Wir interessieren uns nur für die Fläche, die *exklusiv* von einem Prädiktor abgedeckt wird, nicht für die Überlappungen.
+### Deine Aufgabe
+Die Applikation simuliert 100 unabhängige Wahlumfragen gleichzeitig. Der wahre Wert in der Bevölkerung ist als feste rote Linie bei 42 Prozent markiert.
 
-### Interaktives Labor: Der "Omitted Variable Bias"
-
-In dieser Simulation sehen Sie den Unterschied zwischen einer "naiven" Analyse (wir schauen uns nur eine Variable an) und einer "korrekten" multiplen Analyse.
-
-**Ihre Aufgabe:**
-1.  Setzen Sie den **wahren Effekt von X2** (dem Störfaktor) auf einen hohen Wert (z.B. -0.8).
-2.  Erhöhen Sie die **Korrelation** zwischen X1 und X2.
-3.  Beobachten Sie den roten Balken ("Naiver Effekt"). Sehen Sie, wie er sich vom grauen Balken ("Wahrer Effekt") entfernt? Das ist die Verzerrung, wenn man Komplexität ignoriert.
-4.  Der grüne Balken ("Multipler Effekt") bleibt nah an der Wahrheit. Warum? Weil er X2 kontrolliert.
+1. **Beobachten:** Belasse den Regler bei einer kleinen Stichprobengröße von 50 befragten Personen pro Umfrage. Das graue Histogramm zeigt dir die Ergebnisse aller 100 Umfragen. Die gemessenen Werte streuen extrem breit über die horizontale Achse.
+2. **Datenmasse erhöhen:** Schiebe den Regler schrittweise auf 1000 oder mehr befragte Personen hoch.
+3. **Konvergenz begreifen:** Die Verteilung der Umfrageergebnisse zieht sich sofort massiv zusammen. Die Unsicherheit schrumpft in sich zusammen. Du triffst die wahre rote Linie nun mit fast jeder einzelnen Umfrage sehr präzise.
 
 ```{shinylive-python}
 #| standalone: true
-#| viewerHeight: 600
+#| viewerHeight: 650
 
 from shiny import App, render, ui
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
 
 app_ui = ui.page_fluid(
-    ui.layout_sidebar(
-        ui.sidebar(
-            ui.h4("Parameter Labor"),
-            ui.input_slider("r_x1_x2", "Korrelation zwischen X1 und X2", -0.9, 0.9, 0.6, step=0.1),
-            ui.hr(),
-            ui.input_slider("b1", "Wahrer Effekt X1 -> Y", -1.0, 1.0, 0.5, step=0.1),
-            ui.input_slider("b2", "Wahrer Effekt X2 -> Y (Störvariable)", -1.0, 1.0, -0.8, step=0.1),
-            ui.input_slider("n", "Stichprobengröße N", 50, 500, 200),
-        ),
-        ui.card(
-            ui.output_plot("reg_plot"),
-            ui.p("Grau = Wahrheit (Gott-Modus)", style="color:gray; font-size:0.9em"),
-            ui.p("Rot = Naive Messung (Verzerrt!)", style="color:red; font-size:0.9em"),
-            ui.p("Grün = Multiple Regression (Korrigiert)", style="color:green; font-size:0.9em"),
-        ),
-    ),
+    ui.card(
+        ui.card_header("Simulation: Schätzung der Populationswahrheit"),
+        ui.layout_columns(
+            ui.div(
+                ui.h5("Umfrage Parameter"),
+                ui.input_slider("n_sample", "Befragte Personen pro Umfrage", 10, 5000, 50, step=50),
+                ui.hr(),
+                ui.p("Wir simulieren 100 parallele Umfragen. Der wahre Rückhalt der Partei in der gesamten Bevölkerung liegt bei exakt 42 Prozent."),
+            ),
+            ui.output_plot("sample_plot"),
+            col_widths=(4, 8)
+        )
+    )
 )
 
 def server(input, output, session):
     @render.plot
-    def reg_plot():
+    def sample_plot():
+        n = input.n_sample()
+        true_p = 0.42
+        n_surveys = 100
+        
         np.random.seed(42)
-        n = input.n()
-        r12 = input.r_x1_x2()
-        b1_true = input.b1()
-        b2_true = input.b2()
-
-        # Daten generieren: Korrelierte Prädiktoren X1 und X2
-        mean = [0, 0]
-        cov = [[1, r12], [r12, 1]]
-        X = np.random.multivariate_normal(mean, cov, n)
-        x1 = X[:, 0]
-        x2 = X[:, 1]
-
-        # Y generieren (Wahre Welt)
-        y = b1_true * x1 + b2_true * x2 + np.random.normal(0, 1, n)
-
-        # 1. Naive Analyse: Wir ignorieren X2 und schauen nur auf X1
-        model_simple = LinearRegression()
-        model_simple.fit(x1.reshape(-1, 1), y)
-        b1_naive = model_simple.coef_[0]
-
-        # 2. Multiple Regression: Wir nehmen X1 und X2 ins Modell auf
-        model_multi = LinearRegression()
-        model_multi.fit(X, y)
-        b1_multi = model_multi.coef_[0]
-
-        # Plotting
-        fig, ax = plt.subplots(figsize=(6, 5))
+        # 100 Umfragen simulieren, jede zieht n Personen mit Wahrscheinlichkeit true_p
+        successes = np.random.binomial(n, true_p, n_surveys)
+        measured_proportions = successes / n
         
-        labels = ['Wahrheit\n(X1)', 'Naive Analyse\n(nur X1 gemessen)', 'Multiple Reg.\n(X1 kontrolliert)']
-        values = [b1_true, b1_naive, b1_multi]
-        colors = ['#cccccc', '#d9534f', '#5cb85c'] # Gray, Bootstrap Red, Bootstrap Green
+        fig, ax = plt.subplots(figsize=(10, 6))
         
-        bars = ax.bar(labels, values, color=colors, alpha=0.8, edgecolor='black')
-        ax.axhline(0, color='black', linewidth=1)
-        ax.set_ylabel("Geschätzter Effekt (Slope b)", fontsize=12)
-        ax.set_title(f"Verzerrung durch Korrelation (r={r12})", fontsize=14, fontweight='bold')
-        ax.set_ylim(-1.5, 1.5)
+        # Histogramm der 100 Umfrageergebnisse
+        ax.hist(measured_proportions, bins=15, color='#7f8c8d', alpha=0.8, edgecolor='white')
         
-        # Labels auf den Balken
-        for bar in bars:
-            height = bar.get_height()
-            label_y_pos = height + 0.1 if height > 0 else height - 0.15
-            ax.text(bar.get_x() + bar.get_width()/2., label_y_pos,
-                    f'{height:.2f}',
-                    ha='center', va='center', fontweight='bold', fontsize=11)
-
-        # Gitterlinien für bessere Lesbarkeit
-        ax.grid(axis='y', linestyle='--', alpha=0.3)
-
+        # Wahre Populationswahrheit
+        ax.axvline(true_p, color='#e74c3c', linestyle='solid', linewidth=3, label='Wahre Populationswahrheit (42 Prozent)')
+        
+        ax.set_title(f"Ergebnisse von 100 Umfragen (Stichprobengröße N = {n})")
+        ax.set_xlabel("Gemessener Anteil in der Umfrage")
+        ax.set_ylabel("Anzahl der Umfragen")
+        
+        # Feste Achsen für besseren visuellen Vergleich beim Verschieben
+        ax.set_xlim(0.2, 0.6)
+        
+        ax.legend(loc="upper right")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
         return fig
 
 app = App(app_ui, server)

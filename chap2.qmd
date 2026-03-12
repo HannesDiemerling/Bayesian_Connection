@@ -1,115 +1,90 @@
 ---
-title: "Unit 2: Ordnung im Chaos"
+title: "3.2 Verzerrung durch Dropouts und Missings"
+format: html
 ---
 
-**Dauer:** 20 Minuten | **Level:** Mittel
+## Zeit: 15 min | Schwierigkeit: Einsteiger
 
-In der Psychologie messen wir oft Konstrukte, die wir nicht sehen können (Latente Variablen), wie "Intelligenz" oder "Extraversion Dafür nutzen wir Fragebögen mit vielen Items. Aber messen diese 20 Items wirklich 20 verschiedene Dinge? Oder sind sie nur Variationen von wenigen zugrundeliegenden Dimensionen?
+### Theorie: Die Gefahr der schrumpfenden Gruppe
+In der empirischen Forschung reicht es nicht aus, mit einer perfekten Stichprobe zu starten. Die Realität über einen längeren Zeitraum ist unordentlich. Teilnehmer brechen Studien ab, ziehen um oder verweigern Antworten. Diese fehlenden Datenpunkte bezeichnen wir als Dropouts oder Missings.
 
-### Die Explorative Faktorenanalyse (EFA)
+Ein massives Problem entsteht, wenn diese Personen nicht rein zufällig verschwinden. Wenn exakt die Menschen eine Studie abbrechen, bei denen eine Maßnahme nicht funktioniert, entsteht eine systematische Auswahlverzerrung (Little und Rubin, 2019, Statistical Analysis with Missing Data). Die verbleibende Gruppe repräsentiert nicht mehr die allgemeine Bevölkerung. Wertet man nun naiv nur die verbliebenen Daten aus, bläht sich der berechnete Effekt künstlich auf. Die Daten lügen nicht, aber sie zeigen nur noch die verzerrte halbe Wahrheit.
 
-Die EFA ist eine Methode der **Dimensionsreduktion**. Sie sucht nach Bündeln von Variablen, die hoch miteinander korrelieren.
 
-* **Faktorladung:** Wie stark hängt ein Item mit dem latenten Faktor zusammen?
-* **Eigenwert:** Wie viel Information (Varianz) erklärt ein Faktor insgesamt?
 
-Die wichtigste Entscheidung ist oft: **Wie viele Faktoren stecken in meinen Daten?** 
+### Beispiel Langzeitstudie: Der trügerische Diäterfolg
+Ein Institut testet eine neue Diät an 100 Personen. Nach sechs Monaten wird Bilanz gezogen. 
 
-### Interaktives Labor: Der Screeplot-Entscheider
+Die Realität sieht so aus: 50 Personen haben erfolgreich abgenommen. Die anderen 50 Personen haben stark gehungert, aber kein einziges Gramm abgenommen. Diese zweite Gruppe ist frustriert. Sie reagiert nicht mehr auf Anfragen und bricht die Studie ab. Das sind deine Dropouts.
 
-Ein klassisches Werkzeug zur Entscheidungsfindung ist der **Screeplot**. Er zeigt die Eigenwerte der Faktoren. Wir suchen nach dem "Ellbogen" (Knick) – der Punkt, an dem weitere Faktoren nur noch "Geröll" (Rauschen) erklären.
+Der Forscher ignoriert die verschwundenen Teilnehmer. Er berechnet den durchschnittlichen Gewichtsverlust ausschließlich für die 50 verbliebenen Personen. Das Ergebnis sieht fantastisch aus. Er publiziert einen sensationellen Erfolg. Für die allgemeine Bevölkerung ist diese Publikation jedoch wertlos und irreführend, da die Diät in Wahrheit bei exakt der Hälfte der Menschen komplett wirkungslos war.
 
-**Ihre Aufgabe:**
-1.  Stellen Sie ein, dass in den Daten **3 wahre Dimensionen** versteckt sind.
-2.  Erhöhen Sie die Anzahl der Items auf 20.
-3.  Schauen Sie auf den Screeplot. Wo ist der Knick? (Er sollte bei Faktor 3 sein).
-4.  **Härtetest:** Erhöhen Sie das "Rauschen" (Noise). Die Daten werden "dreckiger". Wird der Knick schwerer zu erkennen?
-5.  Achten Sie auf die **rote Linie**. Das ist eine Simulation von reinem Zufall (Parallelanalyse). Alles unter dieser Linie ist statistisch meist wertlos.
+### Deine Aufgabe
+Die Applikation zeigt dir die echten Daten aller 100 Teilnehmer als Streudiagramm. Jeder Punkt ist eine Person. 
+
+1. **Beobachten:** Du siehst die komplette Gruppe. Einige haben Gewicht verloren (Punkte unter der horizontalen Nulllinie), andere haben nichts verloren oder leicht zugenommen. Der wahre Durchschnittseffekt liegt extrem nah bei null.
+2. **Frustrierte entfernen:** Simuliere den Dropout Effekt. Verschiebe den Regler nach unten, um exakt die Teilnehmer aus dem Datensatz zu werfen, die keinen Erfolg hatten und das Handtuch werfen.
+3. **Die Verzerrung erkennen:** Je mehr erfolglose Teilnehmer du entfernst (sie werden grau), desto stärker verschiebt sich die dicke rote Linie des gemessenen Durchschnitts nach unten. Du erzeugst visuell einen gigantischen Diäterfolg, indem du die unbequemen Datenpunkte systematisch ausblendest.
 
 ```{shinylive-python}
 #| standalone: true
-#| viewerHeight: 600
+#| viewerHeight: 650
 
 from shiny import App, render, ui
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.decomposition import PCA
 
 app_ui = ui.page_fluid(
-    ui.layout_sidebar(
-        ui.sidebar(
-            ui.h4("Daten-Generator"),
-            ui.input_slider("n_factors", "Anzahl echter Faktoren (Wahrheit)", 1, 5, 3),
-            ui.input_slider("noise", "Daten-Rauschen (Noise)", 0.2, 3.0, 0.8, step=0.2),
-            ui.input_slider("n_items", "Anzahl der Fragebogen-Items", 10, 30, 15),
-            ui.hr(),
-            ui.p("Simuliert eine Hauptkomponentenanalyse (PCA) auf synthetischen Daten.")
-        ),
-        ui.card(
-            ui.output_plot("scree_plot"),
-            ui.p("Blaue Linie = Ihre Daten", style="color:blue"),
-            ui.p("Rote Linie = Zufallsgrenze (Parallelanalyse)", style="color:red"),
-        ),
-    ),
+    ui.card(
+        ui.card_header("Streudiagramm: Verzerrung durch fehlende Daten"),
+        ui.layout_columns(
+            ui.div(
+                ui.h5("Teilnehmer filtern"),
+                ui.input_slider("dropout_threshold", "Schwelle für Abbruch", -5.0, 5.0, 5.0, step=0.5),
+                ui.hr(),
+                ui.p("Teilnehmer mit einem Wert oberhalb der Schwelle verlassen die Studie. Beobachte die rote Durchschnittslinie."),
+            ),
+            ui.output_plot("scatter_plot"),
+            col_widths=(4, 8)
+        )
+    )
 )
 
 def server(input, output, session):
+    
+    np.random.seed(42)
+    start_weights = np.random.uniform(70, 110, 100)
+    weight_changes = np.random.normal(-0.5, 3.0, 100)
+    
     @render.plot
-    def scree_plot():
-        np.random.seed(99) # Konsistente Ergebnisse
-        n_samples = 200
-        n_items = input.n_items()
-        n_factors = input.n_factors()
-        noise_level = input.noise()
-
-        # 1. Latente Faktoren generieren (Die "Wahrheit" in den Köpfen der Probanden)
-        factors = np.random.normal(0, 1, (n_samples, n_factors))
+    def scatter_plot():
+        threshold = input.dropout_threshold()
         
-        # 2. Ladungsmatrix (Welches Item gehört zu welchem Faktor?)
-        # Wir erzeugen eine einfache Struktur, wo Items primär auf einen Faktor laden
-        loadings = np.zeros((n_factors, n_items))
-        items_per_factor = n_items // n_factors
+        mask_stay = weight_changes <= threshold
+        mask_drop = weight_changes > threshold
         
-        for i in range(n_factors):
-            start = i * items_per_factor
-            end = (i + 1) * items_per_factor if i < n_factors - 1 else n_items
-            # Hohe Ladung auf dem Zielfaktor
-            loadings[i, start:end] = np.random.uniform(0.6, 0.95, end-start)
-            # Kleines Cross-Loading Rauschen auf allen Items
-            loadings[i, :] += np.random.normal(0, 0.1, n_items)
-
-        # 3. Daten simulieren: X = Faktoren * Ladungen + Rauschen
-        X = np.dot(factors, loadings) + np.random.normal(0, noise_level, (n_samples, n_items))
-
-        # 4. PCA durchführen
-        pca = PCA()
-        pca.fit(X)
-        eigenvalues = pca.explained_variance_
+        fig, ax = plt.subplots(figsize=(10, 6))
         
-        # 5. Parallelanalyse simulieren (Vergleich mit Zufallsdaten gleicher Größe)
-        random_data = np.random.normal(0, 1, (n_samples, n_items))
-        pca_rand = PCA()
-        pca_rand.fit(random_data)
-        rand_eigenvalues = pca_rand.explained_variance_
-
-        # Plotten
-        fig, ax = plt.subplots(figsize=(8, 5))
-        components = range(1, len(eigenvalues) + 1)
+        ax.scatter(start_weights[mask_drop], weight_changes[mask_drop], color='#bdc3c7', s=60, alpha=0.5, label='Abbrecher (Dropouts)')
+        ax.scatter(start_weights[mask_stay], weight_changes[mask_stay], color='#2980b9', s=80, alpha=0.9, label='Verbliebene Teilnehmer')
         
-        # Screeplot
-        ax.plot(components, eigenvalues, 'o-', color='#337ab7', linewidth=2, label='Empirische Eigenwerte')
-        ax.plot(components, rand_eigenvalues, '--', color='#d9534f', alpha=0.7, label='Zufallsrauschen (Parallelanalyse)')
+        true_mean = np.mean(weight_changes)
+        ax.axhline(true_mean, color='#7f8c8d', linestyle='dotted', linewidth=2, label=f'Wahrer Durchschnitt ({true_mean:.1f} kg)')
         
-        # Markierung der Wahrheit
-        ax.axvline(x=n_factors, color='green', linestyle=':', linewidth=2, alpha=0.6, label='Wahre Anzahl Faktoren')
-
-        ax.set_xlabel('Komponente / Faktor Nummer')
-        ax.set_ylabel('Eigenwert (Erklärte Varianz)')
-        ax.set_title('Screeplot Analyse')
-        ax.set_xticks(components)
-        ax.legend()
-        ax.grid(True, linestyle=':', alpha=0.6)
-
+        biased_mean = np.mean(weight_changes[mask_stay]) if np.sum(mask_stay) > 0 else 0
+        ax.axhline(biased_mean, color='#e74c3c', linestyle='solid', linewidth=3, label=f'Verzerrter Durchschnitt ({biased_mean:.1f} kg)')
+        
+        ax.axhline(threshold, color='#34495e', linestyle='solid', linewidth=1, alpha=0.3)
+        
+        ax.set_title("Künstlich aufgeblähter Effekt durch selektive Dropouts")
+        ax.set_xlabel("Startgewicht in Kilogramm")
+        ax.set_ylabel("Gewichtsveränderung in Kilogramm")
+        ax.set_ylim(-10, 10)
+        
+        ax.legend(loc="lower left")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
         return fig
 
 app = App(app_ui, server)

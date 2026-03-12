@@ -1,122 +1,102 @@
 ---
-title: "Unit 3: Der Blick in die Black Box"
+title: "3.3 P Hacking und falsch positive Ergebnisse"
+format: html
 ---
 
-**Dauer:** 20 Minuten | **Level:** Schwer
+## Zeit: 15 min | Schwierigkeit: Einsteiger
 
-Wissenschaftliche Psychologie gibt sich selten damit zufrieden festzustellen, *dass* A mit B zusammenhängt. Wir wollen wissen *warum*. Hier betreten wir das Feld der **Kausalmodelle** und **Mediationsanalysen**.
+### Theorie: Die Manipulation der Wahrheit
+Wissenschaftliche Integrität erfordert, dass die Analysemethoden vor der Betrachtung der Daten feststehen. In der Praxis probieren Forscher jedoch oft unzählige Varianten der Datenauswertung aus, bis das Ergebnis endlich signifikant wird. Diese fragwürdige Praxis nennt man P Hacking.
 
-### Die Anatomie eines Wirkmechanismus
+Forscher nutzen verborgene Freiheitsgrade. Sie entfernen schrittweise unbequeme Ausreißer, testen Dutzende von Subgruppen oder fügen willkürlich Kontrollvariablen hinzu. Dieses Herumprobieren treibt den Alpha Fehler extrem in die Höhe. Die Wahrscheinlichkeit für ein falsch positives Ergebnis steigt durch solche Praktiken auf absurde 61 Prozent (Simmons et al., 2011, False Positive Psychology). Ein komplett nutzloses Konzept wird durch reine Datenmanipulation plötzlich als hochwirksam publiziert. Das untergräbt die wissenschaftliche Glaubwürdigkeit maßgeblich.
 
-Nehmen wir ein klassisches Beispiel: Macht Smartphone-Nutzung (X) unglücklich (Y)?
-Vielleicht nicht direkt. Vielleicht führt Nutzung zu "Gefühlter Zeitverschwendung" (M), und *das* macht unglücklich.
+### Beispiel Studie: Das nutzlose Wundermittel
+Ein Institut testet ein neues Nahrungsergänzungsmittel. Der wahre Effekt auf den menschlichen Körper ist exakt null. Das Mittel ist völlig wirkungslos.
 
-Wir zerlegen den Effekt in Pfade:
-* **Pfad a:** Wirkung von X auf den Mediator ($X \rightarrow M$)
-* **Pfad b:** Wirkung des Mediators auf Y ($M \rightarrow Y$)
-* **Pfad c':** Der verbleibende direkte Effekt ($X \rightarrow Y$)
+Nach dem ersten Test liegt der p Wert bei 0.35. Das Ergebnis ist nicht signifikant. Der Forscher will aber zwingend ein positives Ergebnis publizieren. Er betrachtet die Rohdaten. Er beschließt nachträglich und ohne echte Begründung, die vier besten Ergebnisse der Kontrollgruppe und die vier schlechtesten der Behandlungsgruppe als ungültige Messfehler zu deklarieren und zu löschen. Plötzlich fällt der p Wert auf 0.04. Der Forscher meldet einen statistisch signifikanten Durchbruch. Der Effekt wurde nicht entdeckt, er wurde durch selektives Löschen künstlich erzeugt.
 
-Der **Indirekte Effekt** (die Mediation) ist das Produkt aus a und b ($a \times b$).
+### Deine Aufgabe
+Die Applikation simuliert einen reinen Zufallsdatensatz ohne echten Effekt. Du schlüpfst in die Rolle des unethischen Forschers.
 
-### Interaktives Labor: Der Pfad-Simulator
-
-Experimentieren Sie mit den Pfadkoeffizienten, um zu verstehen, wie sich der Gesamteffekt auf die Psyche zusammensetzt.
-
-**Ihre Aufgabe:**
-1.  Stellen Sie **Pfad a** (Nutzung -> Zeitverschwendung) auf 0.5.
-2.  Stellen Sie **Pfad b** (Zeitverschwendung -> Unglück) auf 0.5.
-3.  Setzen Sie den **direkten Pfad c'** auf 0.
-4.  Beobachten Sie das Ergebnis rechts: Obwohl es keinen direkten Pfad gibt, existiert ein starker **Gesamteffekt**. Das ist eine "Vollständige Mediation". Der Wirkmechanismus erklärt alles.
-5.  Was passiert, wenn **Pfad b** negativ ist? (z.B. wenn der Mediator etwas Positives wäre).
+1. **Beobachten:** Bei null entfernten Datenpunkten sind Kontrollgruppe und Behandlungsgruppe nahezu identisch. Die dicken Linien (Mittelwerte) liegen auf einer Höhe. Der p Wert ist groß, das Urteil lautet nicht signifikant.
+2. **P Hacking anwenden:** Nutze den Regler, um die Daten gezielt zu bereinigen. Du entfernst systematisch die höchsten Werte der Kontrollgruppe und die niedrigsten der Behandlungsgruppe.
+3. **Das Urteil erzwingen:** Beobachte, wie sich die dicken Durchschnittslinien künstlich voneinander entfernen. Ab einer bestimmten Anzahl gelöschter Datenpunkte fällt der p Wert unter die magische Grenze von 0.05. Du hast visuell nachvollziehbar ein falsch positives Ergebnis erzwungen.
 
 ```{shinylive-python}
 #| standalone: true
-#| viewerHeight: 500
+#| viewerHeight: 650
 
 from shiny import App, render, ui
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import ttest_ind
 
 app_ui = ui.page_fluid(
-    ui.layout_sidebar(
-        ui.sidebar(
-            ui.h4("Pfad-Kontrolle"),
-            ui.input_slider("path_a", "Pfad a (X -> M)", -1.0, 1.0, 0.6, step=0.1),
-            ui.input_slider("path_b", "Pfad b (M -> Y)", -1.0, 1.0, 0.6, step=0.1),
-            ui.input_slider("path_c_prime", "Pfad c' (Direkter Rest-Effekt)", -1.0, 1.0, 0.1, step=0.1),
-            ui.hr(),
-            ui.p("X = Smartphone Nutzung"),
-            ui.p("M = Zeitverschwendung"),
-            ui.p("Y = Unwohlsein")
-        ),
-        ui.card(
-            ui.output_plot("path_model"),
-        ),
-    ),
+    ui.card(
+        ui.card_header("P Hacker: Erzeuge ein falsch positives Ergebnis"),
+        ui.layout_columns(
+            ui.div(
+                ui.h5("Forschungspraktiken"),
+                ui.input_slider("drop_n", "Gezielter Ausschluss von Datenpunkten", 0, 10, 0),
+                ui.hr(),
+                ui.p("Du entfernst systematisch die höchsten Werte der Kontrollgruppe und die niedrigsten der Behandlungsgruppe."),
+            ),
+            ui.output_plot("hack_plot"),
+            col_widths=(4, 8)
+        )
+    )
 )
 
 def server(input, output, session):
     @render.plot
-    def path_model():
-        a = input.path_a()
-        b = input.path_b()
-        c_prime = input.path_c_prime()
+    def hack_plot():
+        drop_n = input.drop_n()
         
-        # Berechnungen
-        indirect_effect = a * b
-        total_effect = c_prime + indirect_effect
+        np.random.seed(42)
+        group_a = np.random.normal(10, 2.0, 30)
+        group_b = np.random.normal(10, 2.0, 30)
         
-        fig, (ax_model, ax_bar) = plt.subplots(1, 2, figsize=(10, 5), gridspec_kw={'width_ratios': [2, 1]})
+        if drop_n > 0:
+            a_sorted = np.sort(group_a)
+            b_sorted = np.sort(group_b)
+            
+            group_a_hacked = a_sorted[:-drop_n]
+            group_b_hacked = b_sorted[drop_n:]
+        else:
+            group_a_hacked = group_a
+            group_b_hacked = group_b
+            
+        t_stat, p_val = ttest_ind(group_a_hacked, group_b_hacked)
         
-        # --- 1. Pfadmodell Zeichnung (Links) ---
-        ax_model.set_xlim(0, 10)
-        ax_model.set_ylim(0, 6)
-        ax_model.axis('off')
+        fig, ax = plt.subplots(figsize=(10, 6))
         
-        # Boxen Style
-        bbox_props = dict(boxstyle="round,pad=0.5", fc="white", ec="black", lw=2)
+        x_a = np.random.normal(1, 0.05, len(group_a_hacked))
+        x_b = np.random.normal(2, 0.05, len(group_b_hacked))
         
-        # Knoten
-        ax_model.text(1.5, 1.5, "Ursache\n(X)", ha="center", va="center", size=12, bbox=bbox_props)
-        ax_model.text(5, 4.5, "Mediator\n(M)", ha="center", va="center", size=12, bbox=bbox_props)
-        ax_model.text(8.5, 1.5, "Wirkung\n(Y)", ha="center", va="center", size=12, bbox=bbox_props)
+        ax.scatter(x_a, group_a_hacked, color='#7f8c8d', s=80, alpha=0.7, label='Kontrollgruppe')
+        ax.scatter(x_b, group_b_hacked, color='#3498db', s=80, alpha=0.7, label='Behandlungsgruppe')
         
-        # Pfeile Funktion
-        def draw_arrow(x1, y1, x2, y2, label, val):
-            ax_model.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                            arrowprops=dict(arrowstyle="->", lw=2, color="#333"))
-            mid_x = (x1 + x2) / 2
-            mid_y = (y1 + y2) / 2
-            # Label Hintergrund
-            ax_model.text(mid_x, mid_y, f"{label} = {val:.2f}", 
-                        ha="center", va="center", color="blue", fontweight="bold", 
-                        bbox=dict(boxstyle="round,pad=0.2", fc="#f0f0f0", ec="none", alpha=0.8))
-
-        # Koordinaten anpassen für Pfeilspitzen
-        draw_arrow(2.2, 2.0, 4.3, 4.0, "a", a) # X -> M
-        draw_arrow(5.7, 4.0, 7.8, 2.0, "b", b) # M -> Y
-        draw_arrow(2.5, 1.5, 7.5, 1.5, "c'", c_prime) # X -> Y
-
-        ax_model.set_title("Kausales Strukturmodell", fontsize=14)
-
-        # --- 2. Ergebnis Balkendiagramm (Rechts) ---
-        labels = ['Indirekt\n(a*b)', 'Direkt\n(c\')', 'Gesamt\n(Total)']
-        values = [indirect_effect, c_prime, total_effect]
-        colors = ['#f0ad4e', '#5bc0de', '#5cb85c'] # Orange, Blue, Green
+        mean_a = np.mean(group_a_hacked)
+        mean_b = np.mean(group_b_hacked)
+        ax.plot([0.8, 1.2], [mean_a, mean_a], color='#2c3e50', linewidth=3)
+        ax.plot([1.8, 2.2], [mean_b, mean_b], color='#2980b9', linewidth=3)
         
-        bars = ax_bar.bar(labels, values, color=colors, edgecolor='black')
-        ax_bar.axhline(0, color='black', linewidth=1)
-        ax_bar.set_ylim(-1.5, 1.5)
-        ax_bar.set_title("Effekt-Zerlegung", fontsize=14)
-        ax_bar.grid(axis='y', linestyle='--', alpha=0.3)
+        is_sig = p_val < 0.05
+        title_color = '#27ae60' if is_sig else '#e74c3c'
+        status = "SIGNIFIKANT (Erfolg)" if is_sig else "NICHT SIGNIFIKANT"
         
-        # Werte an den Balken
-        for bar in bars:
-            height = bar.get_height()
-            label_pos = height + 0.1 if height > 0 else height - 0.15
-            ax_bar.text(bar.get_x() + bar.get_width()/2., label_pos,
-                        f'{height:.2f}', ha='center', va='center', fontweight='bold')
-
-        plt.tight_layout()
+        ax.set_title(f"p Wert: {p_val:.3f}  |  Urteil: {status}", color=title_color, fontweight='bold', fontsize=14)
+        
+        ax.set_xlim(0.5, 2.5)
+        ax.set_ylim(4, 16)
+        ax.set_xticks([1, 2])
+        ax.set_xticklabels(['Kontrollgruppe', 'Behandlungsgruppe'], fontsize=12)
+        ax.set_ylabel("Gemessener Wert")
+        
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.legend(loc="lower right")
+        
         return fig
 
 app = App(app_ui, server)

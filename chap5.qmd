@@ -1,0 +1,106 @@
+---
+title: "3.5 Unsicherheit quantifizieren"
+format: html
+---
+
+## Zeit: 15 min | Schwierigkeit: Einsteiger
+
+### Theorie: Das Ende der absoluten Gewissheit
+Wissenschaft liefert keine absoluten Wahrheiten. Jede Messung in der realen Welt enthält einen unvermeidbaren Zufallsfehler. Ein einzelner berechneter Mittelwert, der sogenannte Punktschätzer, ist mit an Sicherheit grenzender Wahrscheinlichkeit niemals exakt richtig. Die wahre Kunst der Statistik liegt darin, diese unvermeidbare Unsicherheit ehrlich zu quantifizieren.
+
+Ein Konfidenzintervall liefert genau dieses Maß an Ehrlichkeit. Es rahmt den gemessenen Effekt ein und zeigt den Bereich der Werte, die mit den gesammelten Daten mathematisch kompatibel sind. Die Betrachtung dieses Intervalls zwingt uns, die fehlerhafte und reduktive binäre Logik von signifikant und nicht signifikant endlich zu überwinden (Amrhein et al., 2019, Scientists rise up against statistical significance). Anstatt eine künstliche Schwelle anzubeten, bewerten wir die gesamte Spanne der plausiblen Realität.
+
+[Image of confidence intervals showing varying degrees of uncertainty around a point estimate]
+
+### Beispiel Therapie: Die gefährliche Illusion der Präzision
+Du evaluierst die Wirksamkeit einer neuen Therapie zur Blutdrucksenkung. 
+
+Das binäre statistische Urteil lautet schlicht: Die Therapie wirkt, das Ergebnis ist signifikant. Diese Aussage ist für einen Arzt gefährlich unpräzise.
+Der isolierte Punktschätzer sagt: Die Therapie senkt den Blutdruck um exakt 12 Einheiten. Das suggeriert eine falsche absolute Gewissheit und ignoriert die Unsicherheit der realen Welt komplett.
+
+Die Angabe des Konfidenzintervalls liefert die vollständige Wahrheit: Die Therapie senkt den Blutdruck im Schnitt um 12 Einheiten, aber die Unsicherheit ist massiv. Das berechnete Konfidenzintervall reicht von einer lebensrettenden Senkung um 22 Einheiten bis zu einer praktisch völlig irrelevanten Senkung um lediglich 2 Einheiten. Beide Extreme sind mit den Daten vereinbar. Erst diese ehrliche Quantifizierung der Unsicherheit ermöglicht eine fundierte medizinische Entscheidung.
+
+### Deine Aufgabe
+Die Applikation visualisiert die gemessene Wirksamkeit einer Therapie inklusive der berechneten Unsicherheit (dem 95 Prozent Konfidenzintervall). Die vertikale Nulllinie markiert die absolute Wirkungslosigkeit.
+
+1. **Beobachten:** Bei wenigen Patienten ist das Konfidenzintervall (der dicke Balken) extrem breit. Es kreuzt die Nulllinie. Das binäre Urteil lautet nicht signifikant. Die Therapie könnte extrem gut wirken oder sogar leichten Schaden anrichten. Die Unsicherheit ist zu groß für eine Schlussfolgerung.
+2. **Präzision erzwingen:** Erhöhe die Anzahl der Patienten massiv. Der berechnete Effekt bleibt exakt bei 12 Einheiten, aber das Konfidenzintervall schrumpft dramatisch zusammen.
+3. **Erkenntnis bewerten:** Das Intervall löst sich von der Nulllinie. Du hast die Unsicherheit so weit quantifiziert und reduziert, dass du die extremen Szenarien (Wirkungslosigkeit oder massive Heilung) mathematisch ausschließen kannst. Du kennst nun den wahren, verlässlichen Korridor der Wirksamkeit.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 650
+
+from shiny import App, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+
+app_ui = ui.page_fluid(
+    ui.card(
+        ui.card_header("Unsicherheit: Konfidenzintervall der Wirksamkeit"),
+        ui.layout_columns(
+            ui.div(
+                ui.h5("Parameter der klinischen Studie"),
+                ui.input_slider("n_patients", "Anzahl der Patienten", 10, 500, 20, step=10),
+                ui.input_slider("sd_effect", "Natürliche Schwankung", 10, 100, 40, step=5),
+                ui.hr(),
+                ui.p("Der gemessene durchschnittliche Effekt liegt fest bei 12 Einheiten Blutdrucksenkung. Wir quantifizieren lediglich die Unsicherheit um diesen Wert."),
+            ),
+            ui.output_plot("ci_plot"),
+            col_widths=(4, 8)
+        )
+    )
+)
+
+def server(input, output, session):
+    @render.plot
+    def ci_plot():
+        n = input.n_patients()
+        sd = input.sd_effect()
+        
+        effect = 12.0
+        
+        # Standardfehler berechnen
+        se = sd / np.sqrt(n)
+        
+        # 95 Prozent Konfidenzintervall (1.96 * SE)
+        margin_of_error = 1.96 * se
+        ci_lower = effect - margin_of_error
+        ci_upper = effect + margin_of_error
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Nulllinie (Kein Effekt)
+        ax.axvline(0, color='#34495e', linestyle='dotted', linewidth=2, label='Nullhypothese (Wirkungslos)')
+        
+        # Konfidenzintervall zeichnen
+        is_significant = ci_lower > 0
+        color = '#27ae60' if is_significant else '#7f8c8d'
+        
+        # Horizontale Linie fuer das Intervall
+        ax.plot([ci_lower, ci_upper], [1, 1], color=color, linewidth=8, solid_capstyle='round')
+        
+        # Punktschätzer
+        ax.scatter([effect], [1], color='#2c3e50', s=200, zorder=5, label=f'Gemessener Effekt ({effect} Einheiten)')
+        
+        # Text Annotationen fuer die Intervallgrenzen
+        ax.text(ci_lower, 1.1, f'{ci_lower:.1f}', ha='center', color=color, fontweight='bold', fontsize=12)
+        ax.text(ci_upper, 1.1, f'{ci_upper:.1f}', ha='center', color=color, fontweight='bold', fontsize=12)
+        
+        status = "Signifikant bewiesen" if is_significant else "Zu unsicher (Nicht signifikant)"
+        ax.set_title(f"Quantifizierte Unsicherheit: {status}", fontweight='bold', color=color)
+        
+        ax.set_xlabel("Blutdrucksenkung in Einheiten")
+        ax.set_yticks([])
+        ax.set_xlim(-20, 45)
+        ax.set_ylim(0, 2)
+        
+        ax.legend(loc="lower right")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        
+        return fig
+
+app = App(app_ui, server)
+```

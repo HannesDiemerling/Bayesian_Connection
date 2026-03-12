@@ -1,0 +1,99 @@
+---
+title: "3.4 Schätzgenauigkeit und tolerierbarer Fehler"
+format: html
+---
+
+## Zeit: 15 min | Schwierigkeit: Einsteiger
+
+### Theorie: Planung der perfekten Studie
+Wissenschaft fordert Präzision. Bevor Daten gesammelt werden, muss die Stichprobengröße exakt geplant werden. Simulationen zeigen präzise auf, ab welcher Datenmenge der tolerierbare Fehler beim Schätzen von Populationsparametern mit hoher Sicherheit nicht mehr überschritten wird. Dies bedient direkt die harte Anforderung aus der Praxis an verlässliche Studienergebnisse.
+
+Der Schätzfehler schrumpft mit wachsender Stichprobengröße. Er verhält sich jedoch asymptotisch nach dem Wurzelgesetz. Um den Fehler zu halbieren, musst du die Stichprobengröße vervierfachen (Cochran, 1977, Sampling Techniques). Diese unerbittliche mathematische Realität zwingt Forscher zur präzisen Planung vor Beginn jeder Datenerhebung.
+
+
+
+### Beispiel Klinische Studie: Die exakte Fehlermarge
+Du planst die Probandenzahl für eine teure klinische Studie. Du willst die Verkürzung der Genesungszeit durch ein neues Medikament exakt messen. Die natürliche Schwankung der Genesungszeit bei diesen Patienten liegt bei 10 Tagen.
+
+Die Ethikkommission und der Geldgeber fordern eine Schätzgenauigkeit von maximal 2 Tagen. Dieser Wert ist dein tolerierbarer Fehler. Du musst nun exakt berechnen, wie viele Patienten du rekrutieren musst, um diese Fehlermarge statistisch sicher zu unterschreiten. Rekrutierst du zu wenige Patienten, ist die Studie wertlos. Rekrutierst du zu viele, verbrennst du unnötig Geld und gefährdest grundlos weitere Probanden.
+
+### Deine Aufgabe
+Die Applikation zeigt dir die Präzisionskurve. Die horizontale Achse ist die Anzahl der Patienten. Die vertikale Achse ist der zu erwartende maximale Schätzfehler in Tagen.
+
+1. **Beobachten:** Die blaue Kurve fällt am Anfang extrem steil ab. Jeder zusätzliche Patient bringt massiven Erkenntnisgewinn.
+2. **Asymptote begreifen:** Im rechten Bereich flacht die Kurve massiv ab. Hunderte neue Patienten verringern den Fehler dort kaum noch.
+3. **Planung durchführen:** Setze deinen tolerierbaren Fehler auf 2 Tage. Das System berechnet dir den exakten Schnittpunkt. Du liest ab, wie viele Patienten du für eine erfolgreiche und ethisch vertretbare Studie zwingend benötigst.
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 650
+
+from shiny import App, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+
+app_ui = ui.page_fluid(
+    ui.card(
+        ui.card_header("Präzisionskurve: Planung der Probandenzahl"),
+        ui.layout_columns(
+            ui.div(
+                ui.h5("Studiendesign festlegen"),
+                ui.input_slider("max_error", "Tolerierbarer Fehler in Tagen", 0.5, 6.0, 2.0, step=0.1),
+                ui.hr(),
+                ui.p("Die Streuung der Genesungszeit liegt bei 10 Tagen. Die Kurve zeigt den maximalen Schätzfehler bei gegebener Probandenzahl."),
+            ),
+            ui.output_plot("precision_plot"),
+            col_widths=(4, 8)
+        )
+    )
+)
+
+def server(input, output, session):
+    @render.plot
+    def precision_plot():
+        max_error = input.max_error()
+        
+        sd = 10.0
+        n_vals = np.arange(10, 1001, 1)
+        
+        # Maximaler Schätzfehler (Margin of Error) für 95 Prozent Konfidenz
+        error_vals = 1.96 * (sd / np.sqrt(n_vals))
+        
+        # Finde benötigte Probandenzahl
+        required_n_idx = np.where(error_vals <= max_error)[0]
+        if len(required_n_idx) > 0:
+            optimal_n = n_vals[required_n_idx[0]]
+            optimal_error = error_vals[required_n_idx[0]]
+        else:
+            optimal_n = 1000
+            optimal_error = error_vals[-1]
+            
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        ax.plot(n_vals, error_vals, color='#2980b9', linewidth=3, label='Erwarteter Schätzfehler')
+        
+        ax.axhline(max_error, color='#e74c3c', linestyle='dotted', linewidth=2, label=f'Tolerierbarer Fehler ({max_error} Tage)')
+        
+        if len(required_n_idx) > 0:
+            ax.axvline(optimal_n, color='#34495e', linestyle='solid', linewidth=2)
+            ax.scatter([optimal_n], [optimal_error], color='#c0392b', s=150, zorder=5)
+            ax.text(optimal_n + 20, optimal_error + 0.3, f'Benötigte Patienten: {optimal_n}', color='#2c3e50', fontweight='bold', fontsize=12)
+            
+            # Bereich unterhalb des tolerierbaren Fehlers grün markieren
+            ax.fill_between(n_vals[required_n_idx[0]:], 0, error_vals[required_n_idx[0]:], color='#27ae60', alpha=0.2)
+            
+        ax.set_title("Abnehmender Grenznutzen zusätzlicher Patienten", fontweight='bold')
+        ax.set_xlabel("Anzahl der Patienten in der Studie")
+        ax.set_ylabel("Maximaler Schätzfehler in Tagen")
+        
+        ax.set_xlim(0, 1000)
+        ax.set_ylim(0, 7)
+        
+        ax.legend(loc="upper right")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+        return fig
+
+app = App(app_ui, server)
+```
