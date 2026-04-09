@@ -10,17 +10,17 @@ Wissenschaftliche Integrität erfordert, dass die Analysemethoden vor der Betrac
 
 Forscher nutzen verborgene Freiheitsgrade. Sie entfernen schrittweise unbequeme Ausreißer, testen Dutzende von Subgruppen oder fügen willkürlich Kontrollvariablen hinzu. Dieses Herumprobieren treibt den Alpha Fehler extrem in die Höhe. Die Wahrscheinlichkeit für ein falsch positives Ergebnis steigt durch solche Praktiken auf absurde 61 Prozent (Simmons et al., 2011, False Positive Psychology). Ein komplett nutzloses Konzept wird durch reine Datenmanipulation plötzlich als hochwirksam publiziert. Das untergräbt die wissenschaftliche Glaubwürdigkeit maßgeblich.
 
-### Beispiel Studie: Das nutzlose Wundermittel
-Ein Institut testet ein neues Nahrungsergänzungsmittel. Der wahre Effekt auf den menschlichen Körper ist exakt null. Das Mittel ist völlig wirkungslos.
+### Beispiel SmartRail: Der manipulierte Streckentest
+Die Deutsche Bahn testet SmartRail auf der Strecke Köln–Düsseldorf. Der wahre Effekt auf die Pünktlichkeit ist auf dieser kurzen Strecke exakt null. SmartRail bringt hier keinerlei Verbesserung.
 
-Nach dem ersten Test liegt der p Wert bei 0.35. Das Ergebnis ist nicht signifikant. Der Forscher will aber zwingend ein positives Ergebnis publizieren. Er betrachtet die Rohdaten. Er beschließt nachträglich und ohne echte Begründung, die vier besten Ergebnisse der Kontrollgruppe und die vier schlechtesten der Behandlungsgruppe als ungültige Messfehler zu deklarieren und zu löschen. Plötzlich fällt der p Wert auf 0.04. Der Forscher meldet einen statistisch signifikanten Durchbruch. Der Effekt wurde nicht entdeckt, er wurde durch selektives Löschen künstlich erzeugt.
+Nach der ersten Auswertung von je 30 Fahrten mit dem alten und dem neuen System liegt der p Wert bei 0.35. Das Ergebnis ist nicht signifikant. Das Projektteam steht aber unter Druck, einen Erfolg zu melden. Es betrachtet die Rohdaten. Es beschließt nachträglich, besonders pünktliche Fahrten des alten Systems als Sonderfälle zu deklarieren und die verspätetsten SmartRail-Fahrten als Messfehler aus dem Datensatz zu löschen. Plötzlich fällt der p Wert auf 0.04. Das Team meldet einen signifikanten Durchbruch. Der Effekt wurde nicht entdeckt, er wurde durch selektives Löschen künstlich erzeugt.
 
 ### Deine Aufgabe
-Die Applikation simuliert einen reinen Zufallsdatensatz ohne echten Effekt. Du schlüpfst in die Rolle des unethischen Forschers.
+Die Applikation simuliert einen reinen Zufallsdatensatz ohne echten SmartRail-Effekt. Du schlüpfst in die Rolle des manipulativen Analysten.
 
-1. **Beobachten:** Bei null entfernten Datenpunkten sind Kontrollgruppe und Behandlungsgruppe nahezu identisch. Die dicken Linien (Mittelwerte) liegen auf einer Höhe. Der p Wert ist groß, das Urteil lautet nicht signifikant.
-2. **P Hacking anwenden:** Nutze den Regler, um die Daten gezielt zu bereinigen. Du entfernst systematisch die höchsten Werte der Kontrollgruppe und die niedrigsten der Behandlungsgruppe.
-3. **Das Urteil erzwingen:** Beobachte, wie sich die dicken Durchschnittslinien künstlich voneinander entfernen. Ab einer bestimmten Anzahl gelöschter Datenpunkte fällt der p Wert unter die magische Grenze von 0.05. Du hast visuell nachvollziehbar ein falsch positives Ergebnis erzwungen.
+1. **Beobachten:** Bei null entfernten Datenpunkten sind das alte System und SmartRail nahezu identisch. Die dicken Linien (Mittelwerte) liegen auf einer Höhe. Der p Wert ist groß, das Urteil lautet nicht signifikant.
+2. **P Hacking anwenden:** Nutze den Regler, um die Daten gezielt zu bereinigen. Du entfernst systematisch die pünktlichsten Fahrten des alten Systems und die verspätetsten SmartRail-Fahrten.
+3. **Das Urteil erzwingen:** Beobachte, wie sich die dicken Durchschnittslinien künstlich voneinander entfernen. Ab einer bestimmten Anzahl gelöschter Fahrten fällt der p Wert unter die magische Grenze von 0.05. Du hast visuell nachvollziehbar ein falsch positives Ergebnis erzwungen.
 
 ```{shinylive-python}
 #| standalone: true
@@ -33,13 +33,13 @@ from scipy.stats import ttest_ind
 
 app_ui = ui.page_fluid(
     ui.card(
-        ui.card_header("P Hacker: Erzeuge ein falsch positives Ergebnis"),
+        ui.card_header("SmartRail P Hacker: Erzeuge ein falsch positives Ergebnis"),
         ui.layout_columns(
             ui.div(
-                ui.h5("Forschungspraktiken"),
-                ui.input_slider("drop_n", "Gezielter Ausschluss von Datenpunkten", 0, 10, 0),
+                ui.h5("Analysepraktiken"),
+                ui.input_slider("drop_n", "Gezielt entfernte Fahrten pro Gruppe", 0, 10, 0),
                 ui.hr(),
-                ui.p("Du entfernst systematisch die höchsten Werte der Kontrollgruppe und die niedrigsten der Behandlungsgruppe."),
+                ui.p("Du entfernst systematisch die pünktlichsten Fahrten des alten Systems und die verspätetsten SmartRail-Fahrten."),
             ),
             ui.output_plot("hack_plot"),
             col_widths=(4, 8)
@@ -51,52 +51,55 @@ def server(input, output, session):
     @render.plot
     def hack_plot():
         drop_n = input.drop_n()
-        
+
         np.random.seed(42)
-        group_a = np.random.normal(10, 2.0, 30)
-        group_b = np.random.normal(10, 2.0, 30)
-        
+        old_system = np.random.normal(12, 3.0, 30)   # Verspätung altes System
+        smartrail  = np.random.normal(12, 3.0, 30)   # Verspätung SmartRail (kein Effekt)
+
         if drop_n > 0:
-            a_sorted = np.sort(group_a)
-            b_sorted = np.sort(group_b)
-            
-            group_a_hacked = a_sorted[:-drop_n]
-            group_b_hacked = b_sorted[drop_n:]
+            old_sorted = np.sort(old_system)
+            sr_sorted  = np.sort(smartrail)
+
+            # Entferne die pünktlichsten (niedrigsten) alten Fahrten
+            old_hacked = old_sorted[drop_n:]
+            # Entferne die verspätetsten (höchsten) SmartRail-Fahrten
+            sr_hacked  = sr_sorted[:-drop_n]
         else:
-            group_a_hacked = group_a
-            group_b_hacked = group_b
-            
-        t_stat, p_val = ttest_ind(group_a_hacked, group_b_hacked)
-        
+            old_hacked = old_system
+            sr_hacked  = smartrail
+
+        t_stat, p_val = ttest_ind(old_hacked, sr_hacked)
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        
-        x_a = np.random.normal(1, 0.05, len(group_a_hacked))
-        x_b = np.random.normal(2, 0.05, len(group_b_hacked))
-        
-        ax.scatter(x_a, group_a_hacked, color='#7f8c8d', s=80, alpha=0.7, label='Kontrollgruppe')
-        ax.scatter(x_b, group_b_hacked, color='#3498db', s=80, alpha=0.7, label='Behandlungsgruppe')
-        
-        mean_a = np.mean(group_a_hacked)
-        mean_b = np.mean(group_b_hacked)
-        ax.plot([0.8, 1.2], [mean_a, mean_a], color='#2c3e50', linewidth=3)
-        ax.plot([1.8, 2.2], [mean_b, mean_b], color='#2980b9', linewidth=3)
-        
+
+        np.random.seed(99)
+        x_old = np.random.normal(1, 0.05, len(old_hacked))
+        x_sr  = np.random.normal(2, 0.05, len(sr_hacked))
+
+        ax.scatter(x_old, old_hacked, color='#95a5a6', s=80, alpha=0.7, label='Altes System')
+        ax.scatter(x_sr,  sr_hacked,  color='#3498db', s=80, alpha=0.7, label='SmartRail')
+
+        mean_old = np.mean(old_hacked)
+        mean_sr  = np.mean(sr_hacked)
+        ax.plot([0.8, 1.2], [mean_old, mean_old], color='#2c3e50', linewidth=3)
+        ax.plot([1.8, 2.2], [mean_sr,  mean_sr],  color='#2980b9', linewidth=3)
+
         is_sig = p_val < 0.05
-        title_color = '#27ae60' if is_sig else '#e74c3c'
-        status = "SIGNIFIKANT (Erfolg)" if is_sig else "NICHT SIGNIFIKANT"
-        
+        title_color = '#27ae60' if is_sig else '#c0392b'
+        status = "SIGNIFIKANT (SmartRail wirkt)" if is_sig else "NICHT SIGNIFIKANT"
+
         ax.set_title(f"p Wert: {p_val:.3f}  |  Urteil: {status}", color=title_color, fontweight='bold', fontsize=14)
-        
+
         ax.set_xlim(0.5, 2.5)
-        ax.set_ylim(4, 16)
+        ax.set_ylim(2, 22)
         ax.set_xticks([1, 2])
-        ax.set_xticklabels(['Kontrollgruppe', 'Behandlungsgruppe'], fontsize=12)
-        ax.set_ylabel("Gemessener Wert")
-        
+        ax.set_xticklabels(['Altes System', 'SmartRail'], fontsize=12)
+        ax.set_ylabel("Verspätung in Minuten")
+
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.legend(loc="lower right")
-        
+        ax.legend(loc="upper right")
+
         return fig
 
 app = App(app_ui, server)

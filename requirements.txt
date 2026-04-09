@@ -1,3 +1,5 @@
+jupyter
+pyyaml
 shiny
 shinylive
 numpy

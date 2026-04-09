@@ -10,21 +10,19 @@ In der empirischen Forschung reicht es nicht aus, mit einer perfekten Stichprobe
 
 Ein massives Problem entsteht, wenn diese Personen nicht rein zufällig verschwinden. Wenn exakt die Menschen eine Studie abbrechen, bei denen eine Maßnahme nicht funktioniert, entsteht eine systematische Auswahlverzerrung (Little und Rubin, 2019, Statistical Analysis with Missing Data). Die verbleibende Gruppe repräsentiert nicht mehr die allgemeine Bevölkerung. Wertet man nun naiv nur die verbliebenen Daten aus, bläht sich der berechnete Effekt künstlich auf. Die Daten lügen nicht, aber sie zeigen nur noch die verzerrte halbe Wahrheit.
 
+### Beispiel SmartRail: Die verschwundenen Problemfahrten
+Die Deutsche Bahn testet SmartRail auf 100 ICE-Fahrten quer durch das Netz. Jede Fahrt wird aufgezeichnet und die Verspätungsreduktion gegenüber dem alten System gemessen.
 
+Die Realität sieht so aus: Auf ruhigen Strecken bei gutem Wetter funktioniert SmartRail hervorragend und spart spürbar Verspätung. Auf Fahrten mit Baustellen, Weichenstörungen oder extremem Wetter bringt SmartRail jedoch kaum Verbesserung. Genau bei diesen problematischen Fahrten fallen die Sensoren häufiger aus, die Datenübertragung bricht ab und die Aufzeichnung ist unvollständig. Diese Fahrten verschwinden als Missings aus dem Datensatz.
 
-### Beispiel Langzeitstudie: Der trügerische Diäterfolg
-Ein Institut testet eine neue Diät an 100 Personen. Nach sechs Monaten wird Bilanz gezogen. 
-
-Die Realität sieht so aus: 50 Personen haben erfolgreich abgenommen. Die anderen 50 Personen haben stark gehungert, aber kein einziges Gramm abgenommen. Diese zweite Gruppe ist frustriert. Sie reagiert nicht mehr auf Anfragen und bricht die Studie ab. Das sind deine Dropouts.
-
-Der Forscher ignoriert die verschwundenen Teilnehmer. Er berechnet den durchschnittlichen Gewichtsverlust ausschließlich für die 50 verbliebenen Personen. Das Ergebnis sieht fantastisch aus. Er publiziert einen sensationellen Erfolg. Für die allgemeine Bevölkerung ist diese Publikation jedoch wertlos und irreführend, da die Diät in Wahrheit bei exakt der Hälfte der Menschen komplett wirkungslos war.
+Das Analyseteam ignoriert die unvollständigen Datensätze. Es berechnet die durchschnittliche Verspätungsreduktion ausschließlich auf Basis der verbliebenen, vollständigen Fahrten. Das Ergebnis sieht fantastisch aus. Das Team meldet einen sensationellen Erfolg. Für den echten Betriebsalltag ist diese Analyse jedoch irreführend, da SmartRail unter schwierigen Bedingungen kaum wirkt und genau diese Fahrten systematisch fehlen.
 
 ### Deine Aufgabe
-Die Applikation zeigt dir die echten Daten aller 100 Teilnehmer als Streudiagramm. Jeder Punkt ist eine Person. 
+Die Applikation zeigt dir die echten Daten aller 100 ICE-Fahrten als Streudiagramm. Jeder Punkt ist eine Fahrt. Die horizontale Achse zeigt die Streckenkomplexität (Baustellen, Weichen, Wetter), die vertikale Achse die gemessene Verspätungsreduktion durch SmartRail.
 
-1. **Beobachten:** Du siehst die komplette Gruppe. Einige haben Gewicht verloren (Punkte unter der horizontalen Nulllinie), andere haben nichts verloren oder leicht zugenommen. Der wahre Durchschnittseffekt liegt extrem nah bei null.
-2. **Frustrierte entfernen:** Simuliere den Dropout Effekt. Verschiebe den Regler nach unten, um exakt die Teilnehmer aus dem Datensatz zu werfen, die keinen Erfolg hatten und das Handtuch werfen.
-3. **Die Verzerrung erkennen:** Je mehr erfolglose Teilnehmer du entfernst (sie werden grau), desto stärker verschiebt sich die dicke rote Linie des gemessenen Durchschnitts nach unten. Du erzeugst visuell einen gigantischen Diäterfolg, indem du die unbequemen Datenpunkte systematisch ausblendest.
+1. **Beobachten:** Du siehst alle 100 Fahrten. Einige zeigen eine starke Verspätungsreduktion (Punkte über null), andere zeigen kaum Verbesserung oder sogar leichte Verschlechterung. Der wahre Durchschnittseffekt über alle Fahrten liegt nahe null.
+2. **Problemfahrten entfernen:** Simuliere den Dropout Effekt. Verschiebe den Regler nach links, um Fahrten mit hoher Streckenkomplexität aus dem Datensatz zu werfen, da deren Sensordaten unvollständig sind.
+3. **Die Verzerrung erkennen:** Je mehr komplexe Fahrten du entfernst (sie werden grau), desto stärker verschiebt sich die dicke rote Linie des gemessenen Durchschnitts nach oben. Du erzeugst visuell einen gigantischen SmartRail-Erfolg, indem du die unbequemen Datenpunkte systematisch ausblendest.
 
 ```{shinylive-python}
 #| standalone: true
@@ -36,13 +34,13 @@ import matplotlib.pyplot as plt
 
 app_ui = ui.page_fluid(
     ui.card(
-        ui.card_header("Streudiagramm: Verzerrung durch fehlende Daten"),
+        ui.card_header("SmartRail: Verzerrung durch fehlende Fahrtdaten"),
         ui.layout_columns(
             ui.div(
-                ui.h5("Teilnehmer filtern"),
-                ui.input_slider("dropout_threshold", "Schwelle für Abbruch", -5.0, 5.0, 5.0, step=0.5),
+                ui.h5("Fahrten filtern"),
+                ui.input_slider("dropout_threshold", "Maximale Streckenkomplexität", 1, 10, 10, step=1),
                 ui.hr(),
-                ui.p("Teilnehmer mit einem Wert oberhalb der Schwelle verlassen die Studie. Beobachte die rote Durchschnittslinie."),
+                ui.p("Fahrten mit einer Komplexität oberhalb der Schwelle haben unvollständige Sensordaten und fallen aus der Analyse. Beobachte die rote Durchschnittslinie."),
             ),
             ui.output_plot("scatter_plot"),
             col_widths=(4, 8)
@@ -51,40 +49,43 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
-    
+
     np.random.seed(42)
-    start_weights = np.random.uniform(70, 110, 100)
-    weight_changes = np.random.normal(-0.5, 3.0, 100)
-    
+    n_trips = 100
+    # Streckenkomplexität: 1 (einfach) bis 10 (extrem komplex)
+    complexity = np.random.uniform(1, 10, n_trips)
+    # Verspätungsreduktion sinkt mit steigender Komplexität
+    delay_reduction = 4.0 - 0.5 * complexity + np.random.normal(0, 1.5, n_trips)
+
     @render.plot
     def scatter_plot():
         threshold = input.dropout_threshold()
-        
-        mask_stay = weight_changes <= threshold
-        mask_drop = weight_changes > threshold
-        
+
+        mask_stay = complexity <= threshold
+        mask_drop = complexity > threshold
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        
-        ax.scatter(start_weights[mask_drop], weight_changes[mask_drop], color='#bdc3c7', s=60, alpha=0.5, label='Abbrecher (Dropouts)')
-        ax.scatter(start_weights[mask_stay], weight_changes[mask_stay], color='#2980b9', s=80, alpha=0.9, label='Verbliebene Teilnehmer')
-        
-        true_mean = np.mean(weight_changes)
-        ax.axhline(true_mean, color='#7f8c8d', linestyle='dotted', linewidth=2, label=f'Wahrer Durchschnitt ({true_mean:.1f} kg)')
-        
-        biased_mean = np.mean(weight_changes[mask_stay]) if np.sum(mask_stay) > 0 else 0
-        ax.axhline(biased_mean, color='#e74c3c', linestyle='solid', linewidth=3, label=f'Verzerrter Durchschnitt ({biased_mean:.1f} kg)')
-        
-        ax.axhline(threshold, color='#34495e', linestyle='solid', linewidth=1, alpha=0.3)
-        
-        ax.set_title("Künstlich aufgeblähter Effekt durch selektive Dropouts")
-        ax.set_xlabel("Startgewicht in Kilogramm")
-        ax.set_ylabel("Gewichtsveränderung in Kilogramm")
-        ax.set_ylim(-10, 10)
-        
+
+        ax.scatter(complexity[mask_drop], delay_reduction[mask_drop], color='#bdc3c7', s=60, alpha=0.5, label='Ausgefallene Fahrten (Missings)')
+        ax.scatter(complexity[mask_stay], delay_reduction[mask_stay], color='#3498db', s=80, alpha=0.9, label='Ausgewertete Fahrten')
+
+        true_mean = np.mean(delay_reduction)
+        ax.axhline(true_mean, color='#7f8c8d', linestyle='dotted', linewidth=2, label=f'Wahrer Durchschnitt ({true_mean:.1f} Min)')
+
+        biased_mean = np.mean(delay_reduction[mask_stay]) if np.sum(mask_stay) > 0 else 0
+        ax.axhline(biased_mean, color='#e74c3c', linestyle='solid', linewidth=3, label=f'Verzerrter Durchschnitt ({biased_mean:.1f} Min)')
+
+        ax.axhline(0, color='#34495e', linestyle='solid', linewidth=1, alpha=0.3)
+
+        ax.set_title("Künstlich aufgeblähter SmartRail-Effekt durch fehlende Problemfahrten")
+        ax.set_xlabel("Streckenkomplexität (Baustellen, Wetter, Weichen)")
+        ax.set_ylabel("Verspätungsreduktion in Minuten")
+        ax.set_ylim(-6, 8)
+
         ax.legend(loc="lower left")
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        
+
         return fig
 
 app = App(app_ui, server)
