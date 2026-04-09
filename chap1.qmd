@@ -6,21 +6,21 @@ format: html
 ## Zeit: 15 min | Schwierigkeit: Einsteiger
 
 ### Theorie: Die Suche nach der absoluten Wahrheit
-In der empirischen Forschung messen wir fast nie die gesamte Population. Wir ziehen eine Stichprobe. Das Ziel ist es, von dieser kleinen, messbaren Gruppe auf die absolute Wahrheit in der Grundgesamtheit zu schließen. 
+In der empirischen Forschung messen wir fast nie die gesamte Population. Wir ziehen eine Stichprobe. Das Ziel ist es, von dieser kleinen, messbaren Gruppe auf die absolute Wahrheit in der Grundgesamtheit zu schließen.
 
 Zwei Faktoren bestimmen maßgeblich, ob diese Schätzung gelingt: Die Repräsentativität und die Stichprobengröße. Eine systematisch verzerrte Stichprobe liefert immer falsche Ergebnisse, egal wie groß sie ist. Doch selbst bei absolut perfekter Repräsentativität schwankt das gemessene Ergebnis durch reinen Zufall. Erst mit zunehmender Stichprobengröße schrumpft dieser unvermeidbare Zufallsfehler. Die Schätzung konvergiert gegen die wahre Populationswahrheit (Moore et al., 2012, Introduction to the Practice of Statistics).
 
-### Beispiel Wahlergebnis: Die trügerische Umfrage
-Du willst das bundesweite Wahlergebnis einer bestimmten Partei vorhersagen. Der wahre, dir noch unbekannte Anteil in der Bevölkerung liegt bei exakt 42 Prozent. 
+### Beispiel SmartRail: Die trügerische Stichprobe
+Die Deutsche Bahn will wissen, wie stark SmartRail die durchschnittliche Verspätung im gesamten ICE-Fernverkehr reduziert. Der wahre, noch unbekannte Effekt über alle Strecken und Tageszeiten hinweg liegt bei exakt 2.5 Minuten Verspätungsreduktion pro Fahrt.
 
-Befragst du für deine Umfrage nur 100 zufällige Personen, wird das Ergebnis massiv schwanken. In einer Umfrage misst du vielleicht 35 Prozent, in einer direkt darauffolgenden Umfrage plötzlich 49 Prozent. Die Schätzung springt wild umher und ist für verlässliche Prognosen völlig unbrauchbar. Befragst du hingegen 1000 oder 5000 Personen, greift das Gesetz der großen Zahlen. Deine Ergebnisse pendeln sich extrem eng um die echten 42 Prozent ein. Die Illusion der wilden Schwankung verschwindet.
+Wertet das Projektteam nur 20 zufällig ausgewählte Fahrten aus, schwankt das Ergebnis massiv. Eine Stichprobe zeigt vielleicht 0.8 Minuten Verbesserung, eine andere plötzlich 4.2 Minuten. Die Schätzung springt wild umher und ist für eine verlässliche Bewertung des Systems völlig unbrauchbar. Wertet das Team hingegen 500 oder 1000 Fahrten aus, greift das Gesetz der großen Zahlen. Die gemessene Verspätungsreduktion pendelt sich extrem eng um die echten 2.5 Minuten ein. Die Illusion der wilden Schwankung verschwindet.
 
 ### Deine Aufgabe
-Die Applikation simuliert 100 unabhängige Wahlumfragen gleichzeitig. Der wahre Wert in der Bevölkerung ist als feste rote Linie bei 42 Prozent markiert.
+Die Applikation simuliert 100 unabhängige Auswertungen gleichzeitig. Jede Auswertung zieht eine zufällige Stichprobe von ICE-Fahrten und berechnet die durchschnittliche Verspätungsreduktion durch SmartRail. Der wahre Effekt über das gesamte Netz ist als feste rote Linie bei 2.5 Minuten markiert.
 
-1. **Beobachten:** Belasse den Regler bei einer kleinen Stichprobengröße von 50 befragten Personen pro Umfrage. Das graue Histogramm zeigt dir die Ergebnisse aller 100 Umfragen. Die gemessenen Werte streuen extrem breit über die horizontale Achse.
-2. **Datenmasse erhöhen:** Schiebe den Regler schrittweise auf 1000 oder mehr befragte Personen hoch.
-3. **Konvergenz begreifen:** Die Verteilung der Umfrageergebnisse zieht sich sofort massiv zusammen. Die Unsicherheit schrumpft in sich zusammen. Du triffst die wahre rote Linie nun mit fast jeder einzelnen Umfrage sehr präzise.
+1. **Beobachten:** Belasse den Regler bei einer kleinen Stichprobengröße von 20 ausgewerteten Fahrten. Das graue Histogramm zeigt dir die Ergebnisse aller 100 Auswertungen. Die gemessenen Werte streuen extrem breit über die horizontale Achse.
+2. **Datenmasse erhöhen:** Schiebe den Regler schrittweise auf 500 oder mehr ausgewertete Fahrten hoch.
+3. **Konvergenz begreifen:** Die Verteilung der Ergebnisse zieht sich sofort massiv zusammen. Die Unsicherheit schrumpft in sich zusammen. Du triffst die wahre rote Linie nun mit fast jeder einzelnen Auswertung sehr präzise.
 
 ```{shinylive-python}
 #| standalone: true
@@ -32,13 +32,13 @@ import matplotlib.pyplot as plt
 
 app_ui = ui.page_fluid(
     ui.card(
-        ui.card_header("Simulation: Schätzung der Populationswahrheit"),
+        ui.card_header("SmartRail: Schätzung der wahren Verspätungsreduktion"),
         ui.layout_columns(
             ui.div(
-                ui.h5("Umfrage Parameter"),
-                ui.input_slider("n_sample", "Befragte Personen pro Umfrage", 10, 5000, 50, step=50),
+                ui.h5("Stichproben Parameter"),
+                ui.input_slider("n_sample", "Ausgewertete ICE-Fahrten pro Stichprobe", 10, 1000, 20, step=10),
                 ui.hr(),
-                ui.p("Wir simulieren 100 parallele Umfragen. Der wahre Rückhalt der Partei in der gesamten Bevölkerung liegt bei exakt 42 Prozent."),
+                ui.p("Wir simulieren 100 parallele Auswertungen. Die wahre Verspätungsreduktion durch SmartRail über das gesamte ICE-Netz liegt bei exakt 2.5 Minuten pro Fahrt."),
             ),
             ui.output_plot("sample_plot"),
             col_widths=(4, 8)
@@ -50,33 +50,31 @@ def server(input, output, session):
     @render.plot
     def sample_plot():
         n = input.n_sample()
-        true_p = 0.42
-        n_surveys = 100
-        
+        true_effect = 2.5
+        sd = 5.0
+        n_evaluations = 100
+
         np.random.seed(42)
-        # 100 Umfragen simulieren, jede zieht n Personen mit Wahrscheinlichkeit true_p
-        successes = np.random.binomial(n, true_p, n_surveys)
-        measured_proportions = successes / n
-        
+        # 100 Auswertungen simulieren, jede misst n Fahrten
+        samples = [np.random.normal(true_effect, sd, n) for _ in range(n_evaluations)]
+        measured_means = [np.mean(s) for s in samples]
+
         fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # Histogramm der 100 Umfrageergebnisse
-        ax.hist(measured_proportions, bins=15, color='#7f8c8d', alpha=0.8, edgecolor='white')
-        
-        # Wahre Populationswahrheit
-        ax.axvline(true_p, color='#e74c3c', linestyle='solid', linewidth=3, label='Wahre Populationswahrheit (42 Prozent)')
-        
-        ax.set_title(f"Ergebnisse von 100 Umfragen (Stichprobengröße N = {n})")
-        ax.set_xlabel("Gemessener Anteil in der Umfrage")
-        ax.set_ylabel("Anzahl der Umfragen")
-        
-        # Feste Achsen für besseren visuellen Vergleich beim Verschieben
-        ax.set_xlim(0.2, 0.6)
-        
+
+        ax.hist(measured_means, bins=15, color='#7f8c8d', alpha=0.8, edgecolor='white')
+
+        ax.axvline(true_effect, color='#e74c3c', linestyle='solid', linewidth=3, label='Wahre Verspätungsreduktion (2.5 Min)')
+
+        ax.set_title(f"Ergebnisse von 100 Auswertungen (je {n} ICE-Fahrten)")
+        ax.set_xlabel("Gemessene Verspätungsreduktion in Minuten")
+        ax.set_ylabel("Anzahl der Auswertungen")
+
+        ax.set_xlim(-3, 8)
+
         ax.legend(loc="upper right")
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        
+
         return fig
 
 app = App(app_ui, server)
