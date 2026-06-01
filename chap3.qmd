@@ -16,30 +16,39 @@ Die Deutsche Bahn testet SmartRail auf der Strecke Köln–Düsseldorf. Der wahr
 Nach der ersten Auswertung von je 30 Fahrten mit dem alten und dem neuen System liegt der p Wert bei 0.35. Das Ergebnis ist nicht signifikant. Das Projektteam steht aber unter Druck, einen Erfolg zu melden. Es betrachtet die Rohdaten. Es beschließt nachträglich, besonders pünktliche Fahrten des alten Systems als Sonderfälle zu deklarieren und die verspätetsten SmartRail-Fahrten als Messfehler aus dem Datensatz zu löschen. Plötzlich fällt der p Wert auf 0.04. Das Team meldet einen signifikanten Durchbruch. Der Effekt wurde nicht entdeckt, er wurde durch selektives Löschen künstlich erzeugt.
 
 ### Deine Aufgabe
-Die Applikation simuliert einen reinen Zufallsdatensatz ohne echten SmartRail-Effekt. Du schlüpfst in die Rolle des manipulativen Analysten.
+Die Applikation simuliert einen reinen Zufallsdatensatz ohne echten SmartRail-Effekt. Du triffst nacheinander vernünftig klingende Analyse-Entscheidungen.
 
-1. **Beobachten:** Bei null entfernten Datenpunkten sind das alte System und SmartRail nahezu identisch. Die dicken Linien (Mittelwerte) liegen auf einer Höhe. Der p Wert ist groß, das Urteil lautet nicht signifikant.
-2. **P Hacking anwenden:** Nutze den Regler, um die Daten gezielt zu bereinigen. Du entfernst systematisch die pünktlichsten Fahrten des alten Systems und die verspätetsten SmartRail-Fahrten.
-3. **Das Urteil erzwingen:** Beobachte, wie sich die dicken Durchschnittslinien künstlich voneinander entfernen. Ab einer bestimmten Anzahl gelöschter Fahrten fällt der p Wert unter die magische Grenze von 0.05. Du hast visuell nachvollziehbar ein falsch positives Ergebnis erzwungen.
+1. **Beobachten:** Mit der Standardauswertung (keine Optionen aktiv) liegen altes System und SmartRail praktisch gleichauf. Der p Wert ist groß, das Urteil lautet nicht signifikant.
+2. **Entscheidungen treffen:** Aktiviere einzelne, je für sich plausible Optionen – Ausreißer ausschließen, fürs Wetter kontrollieren, nur Werktage betrachten, eine Subgruppe wählen. Beobachte, wie jeder Pfad einen anderen p Wert liefert.
+3. **Den Garten sehen:** Die App zeigt dir, wie viele der durchprobierten Pfade bereits signifikant geworden sind und welcher der niedrigste p Wert über alle Kombinationen ist. Du erkennst: Ohne eine einzige bewusste Lüge erzwingt allein das Durchprobieren ein falsch positives Ergebnis.
 
 ```{shinylive-python}
 #| standalone: true
-#| viewerHeight: 650
+#| viewerHeight: 750
 
-from shiny import App, render, ui
+from shiny import App, render, ui, reactive
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
+from itertools import product
 
 app_ui = ui.page_fluid(
     ui.card(
-        ui.card_header("SmartRail P Hacker: Erzeuge ein falsch positives Ergebnis"),
+        ui.card_header("SmartRail: Der Garten der sich verzweigenden Pfade"),
         ui.layout_columns(
             ui.div(
-                ui.h5("Analysepraktiken"),
-                ui.input_slider("drop_n", "Gezielt entfernte Fahrten pro Gruppe", 0, 10, 0),
+                ui.h5("Plausible Analyse-Entscheidungen"),
+                ui.input_checkbox("drop_outlier", "Auffällige Ausreißer ausschließen ('Defekte')", False),
+                ui.input_checkbox("control_weather", "Für Wetter kontrollieren (nur 'trockene' Tage)", False),
+                ui.input_checkbox("weekdays_only", "Nur Werktage betrachten", False),
+                ui.input_radio_buttons(
+                    "subgroup", "Subgruppe wählen",
+                    {"all": "Alle Fahrten", "morning": "Nur Berufsverkehr", "long": "Nur Langstrecken-Halte"},
+                    selected="all"
+                ),
                 ui.hr(),
-                ui.p("Du entfernst systematisch die pünktlichsten Fahrten des alten Systems und die verspätetsten SmartRail-Fahrten."),
+                ui.p("Jede Option ist für sich begründbar. Doch jede Kombination ist ein eigener Analysepfad.", style="font-size: 0.9em; color: #555;"),
+                ui.output_ui("garden_status"),
             ),
             ui.output_plot("hack_plot"),
             col_widths=(4, 8)
@@ -48,33 +57,116 @@ app_ui = ui.page_fluid(
 )
 
 def server(input, output, session):
+
+    # Erzeugt einen reproduzierbaren Datensatz ohne echten Effekt.
+    # Jede Fahrt trägt Zusatzmerkmale, an denen die "plausiblen" Filter ansetzen.
+    @reactive.calc
+    def base_data():
+        rng = np.random.default_rng(42)
+        n = 60
+        delay_old = rng.normal(12, 3.0, n)
+        delay_sr  = rng.normal(12, 3.0, n)   # kein Effekt: gleiche Verteilung
+
+        # Begleitmerkmale (reines Rauschen, unkorreliert mit echtem Effekt)
+        dry_old  = rng.random(n) > 0.4
+        dry_sr   = rng.random(n) > 0.4
+        wday_old = rng.random(n) > 0.3
+        wday_sr  = rng.random(n) > 0.3
+        morn_old = rng.random(n) > 0.5
+        morn_sr  = rng.random(n) > 0.5
+        long_old = rng.random(n) > 0.5
+        long_sr  = rng.random(n) > 0.5
+
+        return dict(
+            delay_old=delay_old, delay_sr=delay_sr,
+            dry_old=dry_old, dry_sr=dry_sr,
+            wday_old=wday_old, wday_sr=wday_sr,
+            morn_old=morn_old, morn_sr=morn_sr,
+            long_old=long_old, long_sr=long_sr,
+        )
+
+    # Wendet eine Kombination von Entscheidungen an und gibt die gefilterten Gruppen zurück.
+    def apply_path(d, drop_outlier, control_weather, weekdays_only, subgroup):
+        old = d["delay_old"].copy()
+        sr  = d["delay_sr"].copy()
+        mask_old = np.ones(len(old), dtype=bool)
+        mask_sr  = np.ones(len(sr), dtype=bool)
+
+        if control_weather:
+            mask_old &= d["dry_old"]
+            mask_sr  &= d["dry_sr"]
+        if weekdays_only:
+            mask_old &= d["wday_old"]
+            mask_sr  &= d["wday_sr"]
+        if subgroup == "morning":
+            mask_old &= d["morn_old"]
+            mask_sr  &= d["morn_sr"]
+        elif subgroup == "long":
+            mask_old &= d["long_old"]
+            mask_sr  &= d["long_sr"]
+
+        old = old[mask_old]
+        sr  = sr[mask_sr]
+
+        if drop_outlier:
+            # "Defekte" entfernen: oberste Verspätung je Gruppe streichen
+            if len(old) > 2:
+                old = np.sort(old)[:-1]
+            if len(sr) > 2:
+                sr = np.sort(sr)[:-1]
+
+        return old, sr
+
+    @reactive.calc
+    def current_path():
+        d = base_data()
+        return apply_path(
+            d,
+            input.drop_outlier(),
+            input.control_weather(),
+            input.weekdays_only(),
+            input.subgroup(),
+        )
+
+    # Durchläuft ALLE möglichen Pfade, um den Garten zu illustrieren.
+    @reactive.calc
+    def all_paths():
+        d = base_data()
+        results = []
+        for do, cw, wo, sg in product([False, True], [False, True], [False, True], ["all", "morning", "long"]):
+            old, sr = apply_path(d, do, cw, wo, sg)
+            if len(old) >= 3 and len(sr) >= 3:
+                _, p = ttest_ind(old, sr)
+                results.append(p)
+        return np.array(results)
+
+    @render.ui
+    def garden_status():
+        ps = all_paths()
+        n_sig = int(np.sum(ps < 0.05))
+        p_min = float(np.min(ps))
+        return ui.div(
+            ui.hr(),
+            ui.h5("Der Garten insgesamt"),
+            ui.p(f"Mögliche Analysepfade: {len(ps)}"),
+            ui.p(f"Davon bereits signifikant (p < 0.05): {n_sig}",
+                 style="color: #c0392b; font-weight: bold;" if n_sig > 0 else ""),
+            ui.p(f"Niedrigster p Wert über alle Pfade: {p_min:.3f}",
+                 style="color: #c0392b; font-weight: bold;" if p_min < 0.05 else ""),
+            ui.p("Obwohl der wahre Effekt null ist.", style="font-size: 0.85em; color: #555;"),
+        )
+
     @render.plot
     def hack_plot():
-        drop_n = input.drop_n()
-
-        np.random.seed(42)
-        old_system = np.random.normal(12, 3.0, 30)   # Verspätung altes System
-        smartrail  = np.random.normal(12, 3.0, 30)   # Verspätung SmartRail (kein Effekt)
-
-        if drop_n > 0:
-            old_sorted = np.sort(old_system)
-            sr_sorted  = np.sort(smartrail)
-
-            # Entferne die pünktlichsten (niedrigsten) alten Fahrten
-            old_hacked = old_sorted[drop_n:]
-            # Entferne die verspätetsten (höchsten) SmartRail-Fahrten
-            sr_hacked  = sr_sorted[:-drop_n]
-        else:
-            old_hacked = old_system
-            sr_hacked  = smartrail
+        old_hacked, sr_hacked = current_path()
 
         t_stat, p_val = ttest_ind(old_hacked, sr_hacked)
 
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        np.random.seed(99)
-        x_old = np.random.normal(1, 0.05, len(old_hacked))
-        x_sr  = np.random.normal(2, 0.05, len(sr_hacked))
+        jit = np.random.default_rng(99)
+        x_old = jit.normal(1, 0.05, len(old_hacked))
+        x_sr  = jit.normal(2, 0.05, len(sr_hacked))
 
         ax.scatter(x_old, old_hacked, color='#95a5a6', s=80, alpha=0.7, label='Altes System')
         ax.scatter(x_sr,  sr_hacked,  color='#3498db', s=80, alpha=0.7, label='SmartRail')
@@ -88,7 +180,11 @@ def server(input, output, session):
         title_color = '#27ae60' if is_sig else '#c0392b'
         status = "SIGNIFIKANT (SmartRail wirkt)" if is_sig else "NICHT SIGNIFIKANT"
 
-        ax.set_title(f"p Wert: {p_val:.3f}  |  Urteil: {status}", color=title_color, fontweight='bold', fontsize=14)
+        ax.set_title(
+            f"Dieser Pfad: p = {p_val:.3f}  |  Urteil: {status}\n"
+            f"(n_alt = {len(old_hacked)}, n_SmartRail = {len(sr_hacked)})",
+            color=title_color, fontweight='bold', fontsize=13
+        )
 
         ax.set_xlim(0.5, 2.5)
         ax.set_ylim(2, 22)

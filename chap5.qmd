@@ -8,22 +8,22 @@ format: html
 ### Theorie: Das Ende der absoluten Gewissheit
 Wissenschaft liefert keine absoluten Wahrheiten. Jede Messung in der realen Welt enthält einen unvermeidbaren Zufallsfehler. Ein einzelner berechneter Mittelwert, der sogenannte Punktschätzer, ist mit an Sicherheit grenzender Wahrscheinlichkeit niemals exakt richtig. Die wahre Kunst der Statistik liegt darin, diese unvermeidbare Unsicherheit ehrlich zu quantifizieren.
 
-Ein Konfidenzintervall liefert genau dieses Maß an Ehrlichkeit. Es rahmt den gemessenen Effekt ein und zeigt den Bereich der Werte, die mit den gesammelten Daten mathematisch kompatibel sind. Die Betrachtung dieses Intervalls zwingt uns, die fehlerhafte und reduktive binäre Logik von signifikant und nicht signifikant endlich zu überwinden (Amrhein et al., 2019, Scientists rise up against statistical significance). Anstatt eine künstliche Schwelle anzubeten, bewerten wir die gesamte Spanne der plausiblen Realität.
+Konfidenzintervalle oder Glaubwürdigkeitsintervalle liefern beide diese Information. Sie rahmen den gemessenen Effekt ein und zeigen den Bereich der Werte, die mit den gesammelten Daten mathematisch kompatibel sind. Die Betrachtung diese Intervalle zwingt uns, die fehlerhafte und reduktive binäre Logik von signifikant und nicht signifikant zu überwinden. Anstatt eine künstliche Schwelle anzubeten, bewerten wir die gesamte Spanne der plausiblen Wahrheiten.
 
 ### Beispiel SmartRail: Die gefährliche Illusion der Präzision
 Die Deutsche Bahn evaluiert die Verspätungsreduktion durch SmartRail auf dem gesamten ICE-Netz.
 
 Das binäre statistische Urteil lautet schlicht: SmartRail wirkt, das Ergebnis ist signifikant. Diese Aussage ist für eine Investitionsentscheidung in Milliardenhöhe gefährlich unpräzise.
-Der isolierte Punktschätzer sagt: SmartRail reduziert die Verspätung um exakt 2.5 Minuten pro Fahrt. Das suggeriert eine falsche absolute Gewissheit und ignoriert die Unsicherheit der realen Welt komplett.
+Der isolierte Punktschätzer sagt: SmartRail reduziert die Verspätung um durchschnittlich 2.5 Minuten pro Fahrt. Das suggeriert eine falsche absolute Gewissheit und ignoriert die Unsicherheit der realen Welt komplett.
 
-Die Angabe des Konfidenzintervalls liefert die vollständige Wahrheit: SmartRail reduziert die Verspätung im Schnitt um 2.5 Minuten, aber die Unsicherheit ist massiv. Das berechnete Konfidenzintervall reicht von einer enormen Reduktion um 5 Minuten bis zu einer praktisch irrelevanten Verbesserung um lediglich 0.1 Minuten. Beide Extreme sind mit den Daten vereinbar. Erst diese ehrliche Quantifizierung der Unsicherheit ermöglicht eine fundierte Investitionsentscheidung.
+Die Angabe des Konfidenzintervalls liefert ein vollständigeres Bild der Wahrheit: SmartRail reduziert die Verspätung im Schnitt um 2.5 Minuten, aber die Unsicherheit ist massiv. Das berechnete Konfidenzintervall reicht von einer enormen Reduktion um 5 Minuten bis zu einer praktisch irrelevanten Verbesserung um lediglich 0.1 Minuten. Beide Extreme sind mit den Daten vereinbar. Erst diese ehrliche Quantifizierung der Unsicherheit ermöglicht eine fundierte Investitionsentscheidung.
 
 ### Deine Aufgabe
 Die Applikation visualisiert die gemessene Verspätungsreduktion durch SmartRail inklusive der berechneten Unsicherheit (dem 95 Prozent Konfidenzintervall). Die vertikale Nulllinie markiert die absolute Wirkungslosigkeit.
 
-1. **Beobachten:** Bei wenigen ausgewerteten Fahrten ist das Konfidenzintervall (der dicke Balken) extrem breit. Es kreuzt die Nulllinie. SmartRail könnte die Pünktlichkeit massiv verbessern oder sogar leicht verschlechtern. Die Unsicherheit ist zu groß für eine Schlussfolgerung.
+1. **Beobachten:** Bei wenigen ausgewerteten Fahrten ist das Konfidenzintervall (der dicke Balken) sehr breit. Es kreuzt die Nulllinie. SmartRail könnte die Pünktlichkeit in Wahrheit massiv verbessern oder sogar leicht verschlechtern; wir wissen es nicht. Die Unsicherheit ist zu groß für eine belastbare Schlussfolgerung.
 2. **Präzision erzwingen:** Erhöhe die Anzahl der ausgewerteten ICE-Fahrten massiv. Der berechnete Effekt bleibt exakt bei 2.5 Minuten, aber das Konfidenzintervall schrumpft dramatisch zusammen.
-3. **Erkenntnis bewerten:** Das Intervall löst sich von der Nulllinie. Du hast die Unsicherheit so weit quantifiziert und reduziert, dass du die extremen Szenarien (Wirkungslosigkeit oder massive Verbesserung) mathematisch ausschließen kannst. Du kennst nun den wahren, verlässlichen Korridor der SmartRail-Wirkung.
+3. **Erkenntnis bewerten:** Das Intervall löst sich von der Nulllinie. Du bekommst einen Eindruck davon, wie viele Fahren nötig sind, um den gesuchten Effekt mit einer bestimmten Präzision schätzen zu können.
 
 ```{shinylive-python}
 #| standalone: true
@@ -42,7 +42,7 @@ app_ui = ui.page_fluid(
                 ui.input_slider("n_trips", "Anzahl ausgewerteter ICE-Fahrten", 10, 500, 20, step=10),
                 ui.input_slider("sd_effect", "Natürliche Schwankung der Verspätung", 3, 15, 8, step=1),
                 ui.hr(),
-                ui.p("Die gemessene durchschnittliche Verspätungsreduktion liegt fest bei 2.5 Minuten. Wir quantifizieren lediglich die Unsicherheit um diesen Wert."),
+                ui.p("Die gemessene durchschnittliche Verspätungsreduktion liegt fest bei 2.5 Minuten. Wir quantifizieren lediglich die Unsicherheit beim Schätzen dieses Wertes."),
             ),
             ui.output_plot("ci_plot"),
             col_widths=(4, 8)

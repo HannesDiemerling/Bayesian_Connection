@@ -8,7 +8,7 @@ format: html
 ### Theorie: Die Gefahr der schrumpfenden Gruppe
 In der empirischen Forschung reicht es nicht aus, mit einer perfekten Stichprobe zu starten. Die Realität über einen längeren Zeitraum ist unordentlich. Teilnehmer brechen Studien ab, ziehen um oder verweigern Antworten. Diese fehlenden Datenpunkte bezeichnen wir als Dropouts oder Missings.
 
-Ein massives Problem entsteht, wenn diese Personen nicht rein zufällig verschwinden. Wenn exakt die Menschen eine Studie abbrechen, bei denen eine Maßnahme nicht funktioniert, entsteht eine systematische Auswahlverzerrung (Little und Rubin, 2019, Statistical Analysis with Missing Data). Die verbleibende Gruppe repräsentiert nicht mehr die allgemeine Bevölkerung. Wertet man nun naiv nur die verbliebenen Daten aus, bläht sich der berechnete Effekt künstlich auf. Die Daten lügen nicht, aber sie zeigen nur noch die verzerrte halbe Wahrheit.
+Ein massives Problem entsteht, wenn diese Personen nicht rein zufällig verschwinden. Wenn zum Beispiel vor allem Menschen eine Studie abbrechen, bei denen eine Maßnahme nicht funktioniert, entsteht eine systematische Auswahlverzerrung. Die verbleibende Gruppe repräsentiert nicht mehr die allgemeine Bevölkerung. Wertet man nun naiv nur die verbliebenen Daten aus, bläht sich der berechnete Effekt künstlich auf. Die Daten lügen nicht, aber sie zeigen nur noch die verzerrte halbe Wahrheit.
 
 ### Beispiel SmartRail: Die verschwundenen Problemfahrten
 Die Deutsche Bahn testet SmartRail auf 100 ICE-Fahrten quer durch das Netz. Jede Fahrt wird aufgezeichnet und die Verspätungsreduktion gegenüber dem alten System gemessen.
@@ -22,7 +22,7 @@ Die Applikation zeigt dir die echten Daten aller 100 ICE-Fahrten als Streudiagra
 
 1. **Beobachten:** Du siehst alle 100 Fahrten. Einige zeigen eine starke Verspätungsreduktion (Punkte über null), andere zeigen kaum Verbesserung oder sogar leichte Verschlechterung. Der wahre Durchschnittseffekt über alle Fahrten liegt nahe null.
 2. **Problemfahrten entfernen:** Simuliere den Dropout Effekt. Verschiebe den Regler nach links, um Fahrten mit hoher Streckenkomplexität aus dem Datensatz zu werfen, da deren Sensordaten unvollständig sind.
-3. **Die Verzerrung erkennen:** Je mehr komplexe Fahrten du entfernst (sie werden grau), desto stärker verschiebt sich die dicke rote Linie des gemessenen Durchschnitts nach oben. Du erzeugst visuell einen gigantischen SmartRail-Erfolg, indem du die unbequemen Datenpunkte systematisch ausblendest.
+3. **Die Verzerrung erkennen:** Je mehr komplexe Fahrten du entfernst (sie werden grau), desto stärker verschiebt sich die dicke rote Linie des gemessenen Durchschnitts nach oben. Du erzeugst visuell einen großen SmartRail-Erfolg, indem du die unbequemen Datenpunkte systematisch ausblendest.
 
 ```{shinylive-python}
 #| standalone: true

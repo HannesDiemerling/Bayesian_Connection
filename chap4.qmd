@@ -6,21 +6,21 @@ format: html
 ## Zeit: 15 min | Schwierigkeit: Einsteiger
 
 ### Theorie: Planung der perfekten Studie
-Wissenschaft fordert Präzision. Bevor Daten gesammelt werden, muss die Stichprobengröße exakt geplant werden. Simulationen zeigen präzise auf, ab welcher Datenmenge der tolerierbare Fehler beim Schätzen von Populationsparametern mit hoher Sicherheit nicht mehr überschritten wird. Dies bedient direkt die harte Anforderung aus der Praxis an verlässliche Studienergebnisse.
+Wissenschaft fordert Präzision. Bevor Daten gesammelt werden, muss die Stichprobengröße geplant werden. Simulationen zeigen präzise auf, ab welcher Datenmenge der tolerierbare Fehler beim Schätzen von Populationsparametern mit hoher Wahrscheinlichkeit nicht überschritten wird. Dies bedient direkt die harte Anforderung aus der Praxis an verlässliche Studienergebnisse.
 
-Der Schätzfehler schrumpft mit wachsender Stichprobengröße. Er verhält sich jedoch asymptotisch nach dem Wurzelgesetz. Um den Fehler zu halbieren, musst du die Stichprobengröße vervierfachen (Cochran, 1977, Sampling Techniques). Diese unerbittliche mathematische Realität zwingt Forscher zur präzisen Planung vor Beginn jeder Datenerhebung.
+Der Schätzfehler schrumpft mit wachsender Stichprobengröße. Er verhält sich jedoch in vielen Fällen asymptotisch nach dem Wurzelgesetz. Um den Fehler zu halbieren, musst du die Stichprobengröße vervierfachen. Diese unerbittliche mathematische Realität zwingt Forscher zur präzisen Planung vor Beginn jeder Datenerhebung.
 
 ### Beispiel SmartRail: Wie viele Fahrten braucht die Pilotphase?
-Die Deutsche Bahn plant die Pilotphase für SmartRail. Bevor das System bundesweit ausgerollt wird, muss die durchschnittliche Verspätungsreduktion verlässlich gemessen werden. Die natürliche Schwankung der Verspätung im ICE-Fernverkehr liegt bei 8 Minuten pro Fahrt.
+Die Deutsche Bahn plant die Pilotphase für SmartRail. Bevor das System bundesweit ausgerollt wird, muss die durchschnittliche Verspätungsreduktion verlässlich gemessen werden.
 
-Der Vorstand fordert eine Schätzgenauigkeit von maximal 1.5 Minuten. Dieser Wert ist der tolerierbare Fehler. Das Projektteam muss nun exakt berechnen, wie viele ICE-Fahrten in der Pilotphase aufgezeichnet werden müssen, um diese Fehlermarge statistisch sicher zu unterschreiten. Werden zu wenige Fahrten gemessen, ist die Pilotphase wertlos. Werden zu viele gemessen, verzögert sich der Rollout unnötig und es entstehen vermeidbare Kosten.
+Der Vorstand fordert eine Schätzgenauigkeit von plus/minus 1.5 Minuten. Dieser Wert ist der tolerierbare Fehler. Das Projektteam muss nun exakt berechnen, wie viele ICE-Fahrten in der Pilotphase aufgezeichnet werden müssen, um diese Fehlermarge (Margin of Error) statistisch nicht zu überschreiten. Werden zu wenige Fahrten gemessen, ist die Pilotphase zu unpräzise und damit kaum brauchbar. Werden zu viele gemessen, verzögert sich der Rollout unnötig und es entstehen vermeidbare Kosten.
 
 ### Deine Aufgabe
-Die Applikation zeigt dir die Präzisionskurve. Die horizontale Achse ist die Anzahl der aufgezeichneten ICE-Fahrten. Die vertikale Achse ist der zu erwartende maximale Schätzfehler in Minuten.
+Die Applikation zeigt dir die Präzisionskurve. Die horizontale Achse ist die Anzahl der aufgezeichneten ICE-Fahrten. Die vertikale Achse ist der zu erwartende maximale Schätzfehler in Minuten für die durchschnittliche Verspätungsreduktion.
 
-1. **Beobachten:** Die blaue Kurve fällt am Anfang extrem steil ab. Jede zusätzliche Fahrt bringt massiven Erkenntnisgewinn.
+1. **Beobachten:** Die blaue Kurve fällt am Anfang steil ab. Jede zusätzliche Fahrt bringt deutlich mehr Erkenntnisgewinn.
 2. **Asymptote begreifen:** Im rechten Bereich flacht die Kurve massiv ab. Hunderte neue Fahrten verringern den Fehler dort kaum noch.
-3. **Planung durchführen:** Setze deinen tolerierbaren Fehler auf 1.5 Minuten. Das System berechnet dir den exakten Schnittpunkt. Du liest ab, wie viele ICE-Fahrten du für eine belastbare Pilotphase zwingend benötigst.
+3. **Planung durchführen:** Verändere den für dich akzeptablen, tolerierbaren Fehler. Das System berechnet dir den exakten Schnittpunkt. Du liest ab, wie viele ICE-Fahrten du für eine belastbare Pilotphase zwingend benötigst.
 
 ```{shinylive-python}
 #| standalone: true
@@ -38,7 +38,7 @@ app_ui = ui.page_fluid(
                 ui.h5("Pilotdesign festlegen"),
                 ui.input_slider("max_error", "Tolerierbarer Fehler in Minuten", 0.5, 5.0, 1.5, step=0.1),
                 ui.hr(),
-                ui.p("Die natürliche Schwankung der ICE-Verspätung liegt bei 8 Minuten. Die Kurve zeigt den maximalen Schätzfehler bei gegebener Anzahl aufgezeichneter Fahrten."),
+                ui.p("Die natürliche Schwankung der ICE-Verspätung liegt bei SD = 8 Minuten. Die Kurve zeigt den maximalen Schätzfehler bei gegebener Anzahl aufgezeichneter Fahrten."),
             ),
             ui.output_plot("precision_plot"),
             col_widths=(4, 8)
