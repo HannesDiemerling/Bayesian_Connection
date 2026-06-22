@@ -1,9 +1,9 @@
 ---
-title: "3.3 P Hacking und falsch positive Ergebnisse"
+title: "P Hacking und falsch positive Ergebnisse"
 format: html
 ---
 
-## Zeit: 15 min | Schwierigkeit: Einsteiger
+## Zeit: 15 min
 
 ### Theorie: Die Manipulation der Wahrheit
 Wissenschaftliche Integrität erfordert, dass die Analysemethoden vor der Betrachtung der Daten feststehen. In der Praxis probieren Forscher jedoch oft unzählige Varianten der Datenauswertung aus, bis das Ergebnis endlich signifikant wird. Diese fragwürdige Praxis nennt man P Hacking.
@@ -200,3 +200,9 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 ```
+
+<nav class="workshop-nav">
+  <a class="wnav-prev" href="chap2.html"><span class="wnav-dir">← Zurück</span><span class="wnav-sub">Verzerrung durch Dropouts und Missings</span></a>
+  <a class="wnav-hub" href="https://hannesdiemerling.github.io/Frequent-Reformation/"><span class="wnav-dir">⌂ Hub</span><span class="wnav-sub">Übersicht</span></a>
+  <a class="wnav-next" href="chap4.html"><span class="wnav-dir">Weiter →</span><span class="wnav-sub">Schätzgenauigkeit und tolerierbarer Fehler</span></a>
+</nav>

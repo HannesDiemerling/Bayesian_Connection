@@ -1,9 +1,9 @@
 ---
-title: "3.4 Schätzgenauigkeit und tolerierbarer Fehler"
+title: "Schätzgenauigkeit und tolerierbarer Fehler"
 format: html
 ---
 
-## Zeit: 15 min | Schwierigkeit: Einsteiger
+## Zeit: 15 min
 
 ### Theorie: Planung der perfekten Studie
 Wissenschaft fordert Präzision. Bevor Daten gesammelt werden, muss die Stichprobengröße geplant werden. Simulationen zeigen präzise auf, ab welcher Datenmenge der tolerierbare Fehler beim Schätzen von Populationsparametern mit hoher Wahrscheinlichkeit nicht überschritten wird. Dies bedient direkt die harte Anforderung aus der Praxis an verlässliche Studienergebnisse.
@@ -94,3 +94,9 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 ```
+
+<nav class="workshop-nav">
+  <a class="wnav-prev" href="chap3.html"><span class="wnav-dir">← Zurück</span><span class="wnav-sub">P Hacking und falsch positive Ergebnisse</span></a>
+  <a class="wnav-hub" href="https://hannesdiemerling.github.io/Frequent-Reformation/"><span class="wnav-dir">⌂ Hub</span><span class="wnav-sub">Übersicht</span></a>
+  <a class="wnav-next" href="chap5.html"><span class="wnav-dir">Weiter →</span><span class="wnav-sub">Unsicherheit quantifizieren</span></a>
+</nav>

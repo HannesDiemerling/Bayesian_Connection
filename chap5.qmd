@@ -1,9 +1,9 @@
 ---
-title: "3.5 Unsicherheit quantifizieren"
+title: "Unsicherheit quantifizieren"
 format: html
 ---
 
-## Zeit: 15 min | Schwierigkeit: Einsteiger
+## Zeit: 15 min
 
 ### Theorie: Das Ende der absoluten Gewissheit
 Wissenschaft liefert keine absoluten Wahrheiten. Jede Messung in der realen Welt enthält einen unvermeidbaren Zufallsfehler. Ein einzelner berechneter Mittelwert, der sogenannte Punktschätzer, ist mit an Sicherheit grenzender Wahrscheinlichkeit niemals exakt richtig. Die wahre Kunst der Statistik liegt darin, diese unvermeidbare Unsicherheit ehrlich zu quantifizieren.
@@ -95,3 +95,9 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 ```
+
+<nav class="workshop-nav">
+  <a class="wnav-prev" href="chap4.html"><span class="wnav-dir">← Zurück</span><span class="wnav-sub">Schätzgenauigkeit und tolerierbarer Fehler</span></a>
+  <a class="wnav-hub" href="https://hannesdiemerling.github.io/Frequent-Reformation/"><span class="wnav-dir">⌂ Hub</span><span class="wnav-sub">Übersicht</span></a>
+  <a class="wnav-next" href="https://hannesdiemerling.github.io/Thinking_Bayesian/"><span class="wnav-dir">Nächster Workshop →</span><span class="wnav-sub">Thinking Bayesian</span></a>
+</nav>

@@ -1,9 +1,9 @@
 ---
-title: "3.1 Von der Stichprobe zur Population"
+title: "Von der Stichprobe zur Population"
 format: html
 ---
 
-## Zeit: 15 min | Schwierigkeit: Einsteiger
+## Zeit: 15 min 
 
 ### Theorie: Die Suche nach der absoluten Wahrheit
 In der empirischen Forschung messen wir fast nie die gesamte Population. Wir ziehen eine Stichprobe. Das Ziel ist es, von dieser kleinen, messbaren Gruppe auf die absolute Wahrheit in der Grundgesamtheit zu schließen.
@@ -79,3 +79,9 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 ```
+
+<nav class="workshop-nav">
+  <a class="wnav-prev" href="https://hannesdiemerling.github.io/Beyond_Significance/"><span class="wnav-dir">← Vorheriger Workshop</span><span class="wnav-sub">Beyond Significance</span></a>
+  <a class="wnav-hub" href="https://hannesdiemerling.github.io/Frequent-Reformation/"><span class="wnav-dir">⌂ Hub</span><span class="wnav-sub">Übersicht</span></a>
+  <a class="wnav-next" href="chap2.html"><span class="wnav-dir">Weiter →</span><span class="wnav-sub">Verzerrung durch Dropouts und Missings</span></a>
+</nav>

@@ -1,9 +1,9 @@
 ---
-title: "3.2 Verzerrung durch Dropouts und Missings"
+title: "Verzerrung durch Dropouts und Missings"
 format: html
 ---
 
-## Zeit: 15 min | Schwierigkeit: Einsteiger
+## Zeit: 15 min
 
 ### Theorie: Die Gefahr der schrumpfenden Gruppe
 In der empirischen Forschung reicht es nicht aus, mit einer perfekten Stichprobe zu starten. Die Realität über einen längeren Zeitraum ist unordentlich. Teilnehmer brechen Studien ab, ziehen um oder verweigern Antworten. Diese fehlenden Datenpunkte bezeichnen wir als Dropouts oder Missings.
@@ -90,3 +90,9 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 ```
+
+<nav class="workshop-nav">
+  <a class="wnav-prev" href="chap1.html"><span class="wnav-dir">← Zurück</span><span class="wnav-sub">Von der Stichprobe zur Population</span></a>
+  <a class="wnav-hub" href="https://hannesdiemerling.github.io/Frequent-Reformation/"><span class="wnav-dir">⌂ Hub</span><span class="wnav-sub">Übersicht</span></a>
+  <a class="wnav-next" href="chap3.html"><span class="wnav-dir">Weiter →</span><span class="wnav-sub">P Hacking und falsch positive Ergebnisse</span></a>
+</nav>
